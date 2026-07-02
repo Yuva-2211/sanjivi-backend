@@ -1,0 +1,71 @@
+INFO:     Will watch for changes in these directories: ['C:\\Users\\PAVITHRA\\OneDrive\\Desktop\\sanjivi-backend-main']
+INFO:     Uvicorn running on http://0.0.0.0:8000 (Press CTRL+C to quit)
+INFO:     Started reloader process [8800] using WatchFiles
+INFO:     Started server process [33252]
+INFO:     Waiting for application startup.
+INFO:     Application startup complete.
+Split strings:   0%|          | 0/1 [00:00<?, ?it/s]
+Split strings:   0%|          | 0/1 [00:00<?, ?it/s][A                                                    Split strings:   0%|          | 0/1 [00:00<?, ?it/s]
+                                                    [A                                                    BM25S Retrieve:   0%|          | 0/1 [00:00<?, ?it/s]
+BM25S Retrieve:   0%|          | 0/1 [00:00<?, ?it/s][A
+
+BM25S Retrieve:   0%|          | 0/1 [00:00<?, ?it/s][A[A                                                     
+                                                     [A
+
+                                                     [A[ASplit strings:   0%|          | 0/1 [00:00<?, ?it/s]                                                    BM25S Retrieve:   0%|          | 0/1 [00:00<?, ?it/s]                                                     WARNING:  WatchFiles detected changes in 'sanjivi-frontend-main\node_modules\flatted\python\flatted.py'. Reloading...
+INFO:     Shutting down
+INFO:     Waiting for application shutdown.
+INFO:     Application shutdown complete.
+INFO:     Finished server process [33252]
+INFO:     Started server process [4172]
+INFO:     Waiting for application startup.
+INFO:     Application startup complete.
+Split strings:   0%|          | 0/1 [00:00<?, ?it/s]
+Split strings:   0%|          | 0/1 [00:00<?, ?it/s][A
+
+Split strings:   0%|          | 0/1 [00:00<?, ?it/s][A[A                                                    
+                                                    [A
+
+                                                    [A[ABM25S Retrieve:   0%|          | 0/1 [00:00<?, ?it/s]
+BM25S Retrieve:   0%|          | 0/1 [00:00<?, ?it/s][A
+
+BM25S Retrieve:   0%|          | 0/1 [00:00<?, ?it/s][A[A                                                     
+                                                     [A
+
+                                                     [A[ASplit strings:   0%|          | 0/1 [00:00<?, ?it/s]                                                    BM25S Retrieve:   0%|          | 0/1 [00:00<?, ?it/s]                                                     Split strings:   0%|          | 0/1 [00:00<?, ?it/s]                                                    Split strings:   0%|          | 0/1 [00:00<?, ?it/s]
+Split strings:   0%|          | 0/1 [00:00<?, ?it/s][A
+
+Split strings:   0%|          | 0/1 [00:00<?, ?it/s][A[A                                                    BM25S Retrieve:   0%|          | 0/1 [00:00<?, ?it/s]
+                                                    [A
+
+                                                    [A[A                                                     BM25S Retrieve:   0%|          | 0/1 [00:00<?, ?it/s]
+BM25S Retrieve:   0%|          | 0/1 [00:00<?, ?it/s][A
+
+BM25S Retrieve:   0%|          | 0/1 [00:00<?, ?it/s][A[A                                                     
+                                                     [A
+
+                                                     [A[AWARNING:  WatchFiles detected changes in 'app\agents\orchestrator.py'. Reloading...
+INFO:     Shutting down
+INFO:     Waiting for application shutdown.
+INFO:     Application shutdown complete.
+INFO:     Finished server process [4172]
+INFO:     Started server process [24220]
+INFO:     Waiting for application startup.
+INFO:     Application startup complete.
+WARNING:  WatchFiles detected changes in 'app\agents\orchestrator.py'. Reloading...
+INFO:     Shutting down
+INFO:     Waiting for application shutdown.
+INFO:     Application shutdown complete.
+INFO:     Finished server process [24220]
+INFO:     Started server process [28228]
+INFO:     Waiting for application startup.
+INFO:     Application startup complete.
+WARNING:  WatchFiles detected changes in 'app\agents\emergency.py'. Reloading...
+INFO:     Shutting down
+INFO:     Waiting for application shutdown.
+INFO:     Application shutdown complete.
+INFO:     Finished server process [28228]
+INFO:     Started server process [24480]
+INFO:     Waiting for application startup.
+INFO:     Application startup complete.
+WARNING:  WatchFiles detected changes in 'app\agents\emergency.py'. Reloading...

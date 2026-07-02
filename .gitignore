@@ -1,0 +1,20 @@
+# Byte-compiled / optimized / DLL files
+__pycache__/
+*.py[cod]
+*$py.class
+
+# OS-specific
+.DS_Store
+
+# Environment variables & secrets
+.env
+.env.*
+*.env
+
+# Virtual environments
+venv/
+.venv/
+env/
+venv.bak/
+.env.bak
+sanjivi-frontend-main/

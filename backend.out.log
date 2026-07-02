@@ -1,0 +1,13 @@
+{"model": "llama-3.3-70b-versatile", "index": "sanjivi-ayush", "event": "sanjivi_backend_starting", "level": "info", "timestamp": "2026-07-02T18:06:30.793368Z"}
+{"event": "langgraph_compiled", "level": "info", "timestamp": "2026-07-02T18:06:30.813950Z"}
+Listing indexes
+HTTP Request: GET https://api.pinecone.io/indexes "HTTP/1.1 200 OK"
+Describing index 'sanjivi-ayush'
+HTTP Request: GET https://api.pinecone.io/indexes/sanjivi-ayush "HTTP/1.1 200 OK"
+Index client created for host https://sanjivi-ayush-jvhkk48.svc.aped-4627-b74a.pinecone.io
+{"event": "pinecone_index_cached_at_startup", "level": "info", "timestamp": "2026-07-02T18:06:33.693870Z"}
+{"domain": "ayurveda", "num_docs": 870, "event": "bm25_index_loaded", "level": "info", "timestamp": "2026-07-02T18:06:33.710528Z"}
+{"domain": "siddha", "num_docs": 426, "event": "bm25_index_loaded", "level": "info", "timestamp": "2026-07-02T18:06:33.727446Z"}
+{"domain": "unani", "num_docs": 2030, "event": "bm25_index_loaded", "level": "info", "timestamp": "2026-07-02T18:06:33.770070Z"}
+{"domain": "yoga", "num_docs": 970, "event": "bm25_index_loaded", "level": "info", "timestamp": "2026-07-02T18:06:33.799331Z"}
+{"event": "sanjivi_backend_ready", "level": "info", "timestamp": "2026-07-02T18:06:33.800651Z"}

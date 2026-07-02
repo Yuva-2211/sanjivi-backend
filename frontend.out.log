@@ -1,0 +1,23 @@
+
+> sanjivi-ayush@0.1.0 dev
+> next dev --hostname 0.0.0.0 --port 3000
+
+▲ Next.js 16.2.9 (Turbopack)
+- Local:         http://localhost:3000
+- Network:       http://0.0.0.0:3000
+✓ Ready in 733ms
+Creating turbopack project {
+  dir: 'C:\\Users\\PAVITHRA\\OneDrive\\Desktop\\sanjivi-backend-main\\sanjivi-frontend-main',
+  testMode: true
+}
+
+○ Compiling / ...
+ GET / 200 in 128ms (next.js: 6ms, application-code: 121ms)
+ GET / 200 in 1595ms (next.js: 33ms, application-code: 1561ms)
+○ Compiling /chat ...
+ GET /chat 200 in 5.0s (next.js: 4.6s, application-code: 363ms)
+✓ Compiled in 113ms
+ GET /chat 200 in 203ms (next.js: 109ms, application-code: 94ms)
+✓ Compiled in 180ms
+ GET /chat 200 in 225ms (next.js: 120ms, application-code: 104ms)
+ GET /chat 200 in 245ms (next.js: 5ms, application-code: 240ms)

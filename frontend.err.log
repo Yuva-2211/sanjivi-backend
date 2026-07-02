@@ -1,0 +1,22 @@
+⚠ Warning: Next.js inferred your workspace root, but it may not be correct.
+ We detected multiple lockfiles and selected the directory of C:\Users\PAVITHRA\OneDrive\Desktop\sanjivi-backend-main\package-lock.json as the root directory.
+ To silence this warning, set `turbopack.root` in your Next.js config, or consider removing one of the lockfiles if it's not needed.
+   See https://nextjs.org/docs/app/api-reference/config/next-config-js/turbopack#root-directory for more information.
+ Detected additional lockfiles: 
+   * C:\Users\PAVITHRA\OneDrive\Desktop\sanjivi-backend-main\sanjivi-frontend-main\package-lock.json
+
+[browser] THREE.Clock: This module has been deprecated. Please use THREE.Timer instead. (src/components/ThreeParticles.tsx:120:17)
+[browser] Image with src "/images/ayurvedic_herbs.png" has "fill" but is missing "sizes" prop. Please add it to improve page performance. Read more: https://nextjs.org/docs/api-reference/next/image#sizes
+[browser] Image with src "/images/mortar_pestle.png" has "fill" but is missing "sizes" prop. Please add it to improve page performance. Read more: https://nextjs.org/docs/api-reference/next/image#sizes
+[browser] Image with src "/images/yoga_meditation.png" has "fill" but is missing "sizes" prop. Please add it to improve page performance. Read more: https://nextjs.org/docs/api-reference/next/image#sizes
+[browser] Image with src "/images/doctor_consultation.png" has "fill" but is missing "sizes" prop. Please add it to improve page performance. Read more: https://nextjs.org/docs/api-reference/next/image#sizes
+[browser] Image with src "/images/natural_medicine.png" has "fill" but is missing "sizes" prop. Please add it to improve page performance. Read more: https://nextjs.org/docs/api-reference/next/image#sizes
+[browser] Error parsing stream chunk: TypeError: Cannot read properties of null (reading 'yoga_response')
+    at handleSend (src/app/chat/page.tsx:742:43)
+  740 |               currentData.content = "AYUSH models finished analysis. Synthesizing consens...
+  741 |             } else if (nodeName === "yoga_image_search") {
+> 742 |               currentData.yoga = nodeData.yoga_response || currentData.yoga;
+      |                                           ^
+  743 |             } else if (nodeName === "consensus") {
+  744 |               currentData.consensus = nodeData.consensus_response || currentData.consensus;
+  745 |               currentData.content = "Consensus compiled. Doing safety check..."; (src/app/chat/page.tsx:785:21)
