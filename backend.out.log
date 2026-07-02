@@ -11,3 +11,351 @@ Index client created for host https://sanjivi-ayush-jvhkk48.svc.aped-4627-b74a.p
 {"domain": "unani", "num_docs": 2030, "event": "bm25_index_loaded", "level": "info", "timestamp": "2026-07-02T18:06:33.770070Z"}
 {"domain": "yoga", "num_docs": 970, "event": "bm25_index_loaded", "level": "info", "timestamp": "2026-07-02T18:06:33.799331Z"}
 {"event": "sanjivi_backend_ready", "level": "info", "timestamp": "2026-07-02T18:06:33.800651Z"}
+{"request_id": "f0ad3d68-3832-4cc3-b335-7795c2234f45", "path": "/docs", "method": "GET", "event": "http_request_start", "level": "info", "timestamp": "2026-07-02T18:12:37.748665Z"}
+{"request_id": "f0ad3d68-3832-4cc3-b335-7795c2234f45", "path": "/docs", "method": "GET", "status_code": 200, "duration_ms": 1.51, "event": "http_request_done", "level": "info", "timestamp": "2026-07-02T18:12:37.750099Z"}
+INFO:     127.0.0.1:59015 - "GET /docs HTTP/1.1" 200 OK
+{"request_id": "b43fd068-634f-4160-80a4-15d329795e36", "path": "/docs", "method": "GET", "event": "http_request_start", "level": "info", "timestamp": "2026-07-02T18:12:43.297815Z"}
+{"request_id": "b43fd068-634f-4160-80a4-15d329795e36", "path": "/docs", "method": "GET", "status_code": 200, "duration_ms": 2.29, "event": "http_request_done", "level": "info", "timestamp": "2026-07-02T18:12:43.299997Z"}
+INFO:     127.0.0.1:57865 - "GET /docs HTTP/1.1" 200 OK
+{"request_id": "7d0122fd-d173-4133-8b07-e2ea6de9f91c", "path": "/openapi.json", "method": "GET", "event": "http_request_start", "level": "info", "timestamp": "2026-07-02T18:12:43.809210Z"}
+{"request_id": "7d0122fd-d173-4133-8b07-e2ea6de9f91c", "path": "/openapi.json", "method": "GET", "status_code": 200, "duration_ms": 413.62, "event": "http_request_done", "level": "info", "timestamp": "2026-07-02T18:12:44.222842Z"}
+INFO:     127.0.0.1:57865 - "GET /openapi.json HTTP/1.1" 200 OK
+{"request_id": "7b1c9d81-ad9c-4a13-9340-cc262ff0d28a", "path": "/chat/stream", "method": "OPTIONS", "event": "http_request_start", "level": "info", "timestamp": "2026-07-02T18:13:44.524375Z"}
+{"request_id": "7b1c9d81-ad9c-4a13-9340-cc262ff0d28a", "path": "/chat/stream", "method": "OPTIONS", "status_code": 200, "duration_ms": 1.81, "event": "http_request_done", "level": "info", "timestamp": "2026-07-02T18:13:44.526216Z"}
+INFO:     127.0.0.1:51045 - "OPTIONS /chat/stream HTTP/1.1" 200 OK
+{"request_id": "318409a4-0994-4037-bb21-e4556bc3b1c7", "path": "/chat/stream", "method": "POST", "event": "http_request_start", "level": "info", "timestamp": "2026-07-02T18:13:44.532652Z"}
+{"request_id": "452a9a08-5462-49a6-a4ef-d2c5e1046959", "query": "Pranayama for work stress", "event": "api_chat_stream_request_received", "level": "info", "timestamp": "2026-07-02T18:13:44.537561Z"}
+{"query": "Pranayama for work stress", "event": "sanjivi_stream_start", "level": "info", "timestamp": "2026-07-02T18:13:44.539024Z"}
+{"request_id": "318409a4-0994-4037-bb21-e4556bc3b1c7", "path": "/chat/stream", "method": "POST", "status_code": 200, "duration_ms": 18.15, "event": "http_request_done", "level": "info", "timestamp": "2026-07-02T18:13:44.550797Z"}
+INFO:     127.0.0.1:51045 - "POST /chat/stream HTTP/1.1" 200 OK
+{"query": "Pranayama for work stress", "event": "node_emergency_check", "level": "info", "timestamp": "2026-07-02T18:13:44.554584Z"}
+HTTP Request: POST https://api.groq.com/openai/v1/chat/completions "HTTP/1.1 200 OK"
+groq_call_success
+{"is_emergency": false, "reason": "", "event": "emergency_screen", "level": "info", "timestamp": "2026-07-02T18:13:46.920801Z"}
+{"query": "Pranayama for work stress", "selected_system": "Multisystem", "event": "node_run_experts", "level": "info", "timestamp": "2026-07-02T18:13:46.925008Z"}
+{"selected_system": "Multisystem", "candidate_domains": ["Ayurveda", "Yoga"], "event": "routing_decision", "level": "info", "timestamp": "2026-07-02T18:13:46.927491Z"}
+{"domain": "ayurveda", "query": "Pranayama for work stress", "event": "retriever_start", "level": "info", "timestamp": "2026-07-02T18:13:46.928392Z"}
+{"domain": "siddha", "query": "Pranayama for work stress", "event": "retriever_start", "level": "info", "timestamp": "2026-07-02T18:13:46.929046Z"}
+{"domain": "unani", "query": "Pranayama for work stress", "event": "retriever_start", "level": "info", "timestamp": "2026-07-02T18:13:46.930074Z"}
+{"domain": "homeopathy", "query": "Pranayama for work stress", "event": "retriever_start", "level": "info", "timestamp": "2026-07-02T18:13:46.934040Z"}
+{"domain": "yoga", "query": "Pranayama for work stress", "event": "retriever_start", "level": "info", "timestamp": "2026-07-02T18:13:46.938586Z"}
+Generating embeddings with model 'llama-text-embed-v2'
+Generating embeddings with model 'llama-text-embed-v2'
+Generating embeddings with model 'llama-text-embed-v2'
+Generating embeddings with model 'llama-text-embed-v2'
+Generating embeddings with model 'llama-text-embed-v2'
+Querying index with top_k=10
+Querying index with top_k=10
+Querying index with top_k=10
+Querying index with top_k=10
+Querying index with top_k=10
+{"domain": "ayurveda", "dense": 10, "sparse": 10, "event": "retriever_results", "level": "info", "timestamp": "2026-07-02T18:13:51.859426Z"}
+{"domain": "ayurveda", "returned": 7, "event": "retriever_done", "level": "info", "timestamp": "2026-07-02T18:13:51.860656Z"}
+{"domain": "yoga", "dense": 10, "sparse": 10, "event": "retriever_results", "level": "info", "timestamp": "2026-07-02T18:13:51.871438Z"}
+{"domain": "yoga", "returned": 7, "event": "retriever_done", "level": "info", "timestamp": "2026-07-02T18:13:51.872519Z"}
+{"domain": "homeopathy", "dense": 10, "sparse": 0, "event": "retriever_results", "level": "info", "timestamp": "2026-07-02T18:13:51.875102Z"}
+{"domain": "homeopathy", "returned": 7, "event": "retriever_done", "level": "info", "timestamp": "2026-07-02T18:13:51.875678Z"}
+{"domain": "siddha", "dense": 10, "sparse": 10, "event": "retriever_results", "level": "info", "timestamp": "2026-07-02T18:13:51.918070Z"}
+{"domain": "siddha", "returned": 7, "event": "retriever_done", "level": "info", "timestamp": "2026-07-02T18:13:51.919203Z"}
+{"domain": "unani", "dense": 10, "sparse": 10, "event": "retriever_results", "level": "info", "timestamp": "2026-07-02T18:13:51.948221Z"}
+{"domain": "unani", "returned": 7, "event": "retriever_done", "level": "info", "timestamp": "2026-07-02T18:13:51.949221Z"}
+{"query": "Pranayama for work stress", "event": "ayurveda_expert_start", "level": "info", "timestamp": "2026-07-02T18:13:51.950299Z"}
+{"query": "Pranayama for work stress", "event": "siddha_expert_start", "level": "info", "timestamp": "2026-07-02T18:13:53.332537Z"}
+{"query": "Pranayama for work stress", "event": "unani_expert_start", "level": "info", "timestamp": "2026-07-02T18:13:53.334334Z"}
+{"query": "Pranayama for work stress", "event": "homeopathy_expert_start", "level": "info", "timestamp": "2026-07-02T18:13:53.336036Z"}
+{"query": "Pranayama for work stress", "event": "yoga_expert_start", "level": "info", "timestamp": "2026-07-02T18:13:53.337526Z"}
+HTTP Request: POST https://api.groq.com/openai/v1/chat/completions "HTTP/1.1 429 Too Many Requests"
+Retrying request to /openai/v1/chat/completions in 18.000000 seconds
+HTTP Request: POST https://api.groq.com/openai/v1/chat/completions "HTTP/1.1 200 OK"
+groq_call_success
+{"confidence": 0.9, "event": "siddha_expert_done", "level": "info", "timestamp": "2026-07-02T18:13:53.852505Z"}
+HTTP Request: POST https://api.groq.com/openai/v1/chat/completions "HTTP/1.1 200 OK"
+groq_call_success
+{"confidence": 0.8, "event": "ayurveda_expert_done", "level": "info", "timestamp": "2026-07-02T18:13:54.047697Z"}
+HTTP Request: POST https://api.groq.com/openai/v1/chat/completions "HTTP/1.1 200 OK"
+groq_call_success
+{"confidence": 0.85, "event": "homeopathy_expert_done", "level": "info", "timestamp": "2026-07-02T18:13:54.087024Z"}
+HTTP Request: POST https://api.groq.com/openai/v1/chat/completions "HTTP/1.1 200 OK"
+groq_call_success
+{"poses": 0, "event": "yoga_expert_done", "level": "info", "timestamp": "2026-07-02T18:13:54.114867Z"}
+HTTP Request: POST https://api.groq.com/openai/v1/chat/completions "HTTP/1.1 200 OK"
+groq_call_success
+{"confidence": 0.8, "event": "unani_expert_done", "level": "info", "timestamp": "2026-07-02T18:14:12.092550Z"}
+{"ayurveda": true, "siddha": true, "unani": true, "homeopathy": true, "yoga": true, "event": "node_run_experts_done", "level": "info", "timestamp": "2026-07-02T18:14:12.093655Z"}
+{"event": "node_consensus", "level": "info", "timestamp": "2026-07-02T18:14:12.097639Z"}
+{"event": "consensus_agent_start", "level": "info", "timestamp": "2026-07-02T18:14:12.098698Z"}
+{"event": "node_yoga_image_search", "level": "info", "timestamp": "2026-07-02T18:14:14.586492Z"}
+HTTP Request: POST https://api.groq.com/openai/v1/chat/completions "HTTP/1.1 200 OK"
+groq_call_success
+{"themes": 3, "event": "consensus_agent_done", "level": "info", "timestamp": "2026-07-02T18:14:15.087421Z"}
+{"event": "node_reviewer", "level": "info", "timestamp": "2026-07-02T18:14:15.090361Z"}
+{"event": "reviewer_agent_start", "level": "info", "timestamp": "2026-07-02T18:14:15.091663Z"}
+HTTP Request: POST https://api.groq.com/openai/v1/chat/completions "HTTP/1.1 429 Too Many Requests"
+Retrying request to /openai/v1/chat/completions in 7.000000 seconds
+HTTP Request: POST https://api.groq.com/openai/v1/chat/completions "HTTP/1.1 200 OK"
+groq_call_success
+{"validated": true, "warnings": 0, "event": "reviewer_agent_done", "level": "info", "timestamp": "2026-07-02T18:14:25.253661Z"}
+ {"event": "sanjivi_backend_shutting_down", "level": "info", "timestamp": "2026-07-02T18:18:02.409480Z"}
+{"model": "llama-3.3-70b-versatile", "index": "sanjivi-ayush", "event": "sanjivi_backend_starting", "level": "info", "timestamp": "2026-07-02T18:18:23.220493Z"}
+{"event": "langgraph_compiled", "level": "info", "timestamp": "2026-07-02T18:18:23.257716Z"}
+Listing indexes
+HTTP Request: GET https://api.pinecone.io/indexes "HTTP/1.1 200 OK"
+Describing index 'sanjivi-ayush'
+HTTP Request: GET https://api.pinecone.io/indexes/sanjivi-ayush "HTTP/1.1 200 OK"
+Index client created for host https://sanjivi-ayush-jvhkk48.svc.aped-4627-b74a.pinecone.io
+{"event": "pinecone_index_cached_at_startup", "level": "info", "timestamp": "2026-07-02T18:18:27.415832Z"}
+{"domain": "ayurveda", "num_docs": 870, "event": "bm25_index_loaded", "level": "info", "timestamp": "2026-07-02T18:18:27.431558Z"}
+{"domain": "siddha", "num_docs": 426, "event": "bm25_index_loaded", "level": "info", "timestamp": "2026-07-02T18:18:27.451310Z"}
+{"domain": "unani", "num_docs": 2030, "event": "bm25_index_loaded", "level": "info", "timestamp": "2026-07-02T18:18:27.516668Z"}
+{"domain": "yoga", "num_docs": 970, "event": "bm25_index_loaded", "level": "info", "timestamp": "2026-07-02T18:18:27.556730Z"}
+{"event": "sanjivi_backend_ready", "level": "info", "timestamp": "2026-07-02T18:18:27.557997Z"}
+{"request_id": "d2cc71eb-0656-498c-89ad-3a61d5d66ac6", "path": "/chat/stream", "method": "OPTIONS", "event": "http_request_start", "level": "info", "timestamp": "2026-07-02T18:28:47.663552Z"}
+{"request_id": "d2cc71eb-0656-498c-89ad-3a61d5d66ac6", "path": "/chat/stream", "method": "OPTIONS", "status_code": 200, "duration_ms": 1.46, "event": "http_request_done", "level": "info", "timestamp": "2026-07-02T18:28:47.664895Z"}
+INFO:     127.0.0.1:62838 - "OPTIONS /chat/stream HTTP/1.1" 200 OK
+{"request_id": "1c686250-61ef-4c14-89d2-7c7482ef3516", "path": "/chat/stream", "method": "POST", "event": "http_request_start", "level": "info", "timestamp": "2026-07-02T18:28:47.668949Z"}
+{"request_id": "af310c67-b36d-42da-99c8-79b690cbbcd2", "query": "Pranayama for work stress", "event": "api_chat_stream_request_received", "level": "info", "timestamp": "2026-07-02T18:28:47.672625Z"}
+{"query": "Pranayama for work stress", "event": "sanjivi_stream_start", "level": "info", "timestamp": "2026-07-02T18:28:47.673703Z"}
+{"request_id": "1c686250-61ef-4c14-89d2-7c7482ef3516", "path": "/chat/stream", "method": "POST", "status_code": 200, "duration_ms": 11.59, "event": "http_request_done", "level": "info", "timestamp": "2026-07-02T18:28:47.680530Z"}
+INFO:     127.0.0.1:62838 - "POST /chat/stream HTTP/1.1" 200 OK
+{"query": "Pranayama for work stress", "event": "node_emergency_check", "level": "info", "timestamp": "2026-07-02T18:28:47.683088Z"}
+HTTP Request: POST https://api.groq.com/openai/v1/chat/completions "HTTP/1.1 200 OK"
+groq_call_success
+{"is_emergency": false, "reason": "", "event": "emergency_screen", "level": "info", "timestamp": "2026-07-02T18:28:50.206268Z"}
+{"query": "Pranayama for work stress", "selected_system": "Multisystem", "event": "node_run_experts", "level": "info", "timestamp": "2026-07-02T18:28:50.210600Z"}
+{"selected_system": "Multisystem", "candidate_domains": ["Ayurveda", "Yoga"], "event": "routing_decision", "level": "info", "timestamp": "2026-07-02T18:28:50.212799Z"}
+{"domain": "ayurveda", "query": "Pranayama for work stress", "event": "retriever_start", "level": "info", "timestamp": "2026-07-02T18:28:50.213829Z"}
+{"domain": "siddha", "query": "Pranayama for work stress", "event": "retriever_start", "level": "info", "timestamp": "2026-07-02T18:28:50.214539Z"}
+{"domain": "unani", "query": "Pranayama for work stress", "event": "retriever_start", "level": "info", "timestamp": "2026-07-02T18:28:50.224925Z"}
+{"domain": "homeopathy", "query": "Pranayama for work stress", "event": "retriever_start", "level": "info", "timestamp": "2026-07-02T18:28:50.227185Z"}
+{"domain": "yoga", "query": "Pranayama for work stress", "event": "retriever_start", "level": "info", "timestamp": "2026-07-02T18:28:50.230876Z"}
+Generating embeddings with model 'llama-text-embed-v2'
+Generating embeddings with model 'llama-text-embed-v2'
+Generating embeddings with model 'llama-text-embed-v2'
+Generating embeddings with model 'llama-text-embed-v2'
+Generating embeddings with model 'llama-text-embed-v2'
+Querying index with top_k=10
+Querying index with top_k=10
+Querying index with top_k=10
+Querying index with top_k=10
+{"domain": "yoga", "dense": 10, "sparse": 10, "event": "retriever_results", "level": "info", "timestamp": "2026-07-02T18:28:55.670236Z"}
+{"domain": "yoga", "returned": 7, "event": "retriever_done", "level": "info", "timestamp": "2026-07-02T18:28:55.671079Z"}
+{"domain": "homeopathy", "dense": 10, "sparse": 0, "event": "retriever_results", "level": "info", "timestamp": "2026-07-02T18:28:55.699980Z"}
+{"domain": "homeopathy", "returned": 7, "event": "retriever_done", "level": "info", "timestamp": "2026-07-02T18:28:55.700564Z"}
+{"domain": "siddha", "dense": 10, "sparse": 10, "event": "retriever_results", "level": "info", "timestamp": "2026-07-02T18:28:55.700994Z"}
+{"domain": "siddha", "returned": 7, "event": "retriever_done", "level": "info", "timestamp": "2026-07-02T18:28:55.701330Z"}
+{"domain": "unani", "dense": 10, "sparse": 10, "event": "retriever_results", "level": "info", "timestamp": "2026-07-02T18:28:55.738305Z"}
+{"domain": "unani", "returned": 7, "event": "retriever_done", "level": "info", "timestamp": "2026-07-02T18:28:55.738873Z"}
+Querying index with top_k=10
+{"domain": "ayurveda", "dense": 10, "sparse": 10, "event": "retriever_results", "level": "info", "timestamp": "2026-07-02T18:29:09.800718Z"}
+{"domain": "ayurveda", "returned": 7, "event": "retriever_done", "level": "info", "timestamp": "2026-07-02T18:29:09.802350Z"}
+{"query": "Pranayama for work stress", "event": "ayurveda_expert_start", "level": "info", "timestamp": "2026-07-02T18:29:09.803760Z"}
+{"query": "Pranayama for work stress", "event": "siddha_expert_start", "level": "info", "timestamp": "2026-07-02T18:29:12.201298Z"}
+{"query": "Pranayama for work stress", "event": "unani_expert_start", "level": "info", "timestamp": "2026-07-02T18:29:12.204848Z"}
+{"query": "Pranayama for work stress", "event": "homeopathy_expert_start", "level": "info", "timestamp": "2026-07-02T18:29:12.206494Z"}
+{"query": "Pranayama for work stress", "event": "yoga_expert_start", "level": "info", "timestamp": "2026-07-02T18:29:12.207863Z"}
+HTTP Request: POST https://api.groq.com/openai/v1/chat/completions "HTTP/1.1 429 Too Many Requests"
+Retrying request to /openai/v1/chat/completions in 18.000000 seconds
+HTTP Request: POST https://api.groq.com/openai/v1/chat/completions "HTTP/1.1 200 OK"
+groq_call_success
+{"confidence": 0.9, "event": "siddha_expert_done", "level": "info", "timestamp": "2026-07-02T18:29:12.889056Z"}
+HTTP Request: POST https://api.groq.com/openai/v1/chat/completions "HTTP/1.1 200 OK"
+groq_call_success
+{"confidence": 0.8, "event": "unani_expert_done", "level": "info", "timestamp": "2026-07-02T18:29:12.923081Z"}
+HTTP Request: POST https://api.groq.com/openai/v1/chat/completions "HTTP/1.1 200 OK"
+HTTP Request: POST https://api.groq.com/openai/v1/chat/completions "HTTP/1.1 200 OK"
+groq_call_success
+{"confidence": 0.85, "event": "homeopathy_expert_done", "level": "info", "timestamp": "2026-07-02T18:29:13.122737Z"}
+groq_call_success
+{"poses": 0, "event": "yoga_expert_done", "level": "info", "timestamp": "2026-07-02T18:29:13.124716Z"}
+HTTP Request: POST https://api.groq.com/openai/v1/chat/completions "HTTP/1.1 200 OK"
+groq_call_success
+{"confidence": 0.8, "event": "ayurveda_expert_done", "level": "info", "timestamp": "2026-07-02T18:29:31.078362Z"}
+{"ayurveda": true, "siddha": true, "unani": true, "homeopathy": true, "yoga": true, "event": "node_run_experts_done", "level": "info", "timestamp": "2026-07-02T18:29:31.080051Z"}
+{"event": "node_consensus", "level": "info", "timestamp": "2026-07-02T18:29:31.083515Z"}
+{"event": "consensus_agent_start", "level": "info", "timestamp": "2026-07-02T18:29:31.084367Z"}
+{"event": "node_yoga_image_search", "level": "info", "timestamp": "2026-07-02T18:29:33.584631Z"}
+HTTP Request: POST https://api.groq.com/openai/v1/chat/completions "HTTP/1.1 429 Too Many Requests"
+Retrying request to /openai/v1/chat/completions in 2.000000 seconds
+HTTP Request: POST https://api.groq.com/openai/v1/chat/completions "HTTP/1.1 200 OK"
+groq_call_success
+{"themes": 3, "event": "consensus_agent_done", "level": "info", "timestamp": "2026-07-02T18:29:36.250754Z"}
+{"event": "node_reviewer", "level": "info", "timestamp": "2026-07-02T18:29:36.253944Z"}
+{"event": "reviewer_agent_start", "level": "info", "timestamp": "2026-07-02T18:29:36.254815Z"}
+HTTP Request: POST https://api.groq.com/openai/v1/chat/completions "HTTP/1.1 429 Too Many Requests"
+Retrying request to /openai/v1/chat/completions in 8.000000 seconds
+HTTP Request: POST https://api.groq.com/openai/v1/chat/completions "HTTP/1.1 200 OK"
+groq_call_success
+{"validated": true, "warnings": 0, "event": "reviewer_agent_done", "level": "info", "timestamp": "2026-07-02T18:29:47.326987Z"}
+{"request_id": "c3cec702-f3af-48ac-8291-1617f5611663", "path": "/chat/stream", "method": "POST", "event": "http_request_start", "level": "info", "timestamp": "2026-07-02T18:30:16.548200Z"}
+{"request_id": "8fe61041-a2e2-49bb-a811-b109d9b5c3fb", "query": "ulcer", "event": "api_chat_stream_request_received", "level": "info", "timestamp": "2026-07-02T18:30:16.550657Z"}
+{"query": "ulcer", "event": "sanjivi_stream_start", "level": "info", "timestamp": "2026-07-02T18:30:16.552017Z"}
+{"request_id": "c3cec702-f3af-48ac-8291-1617f5611663", "path": "/chat/stream", "method": "POST", "status_code": 200, "duration_ms": 6.64, "event": "http_request_done", "level": "info", "timestamp": "2026-07-02T18:30:16.554808Z"}
+INFO:     127.0.0.1:60630 - "POST /chat/stream HTTP/1.1" 200 OK
+{"query": "ulcer", "event": "node_emergency_check", "level": "info", "timestamp": "2026-07-02T18:30:16.556466Z"}
+HTTP Request: POST https://api.groq.com/openai/v1/chat/completions "HTTP/1.1 200 OK"
+groq_call_success
+{"is_emergency": false, "reason": "", "event": "emergency_screen", "level": "info", "timestamp": "2026-07-02T18:30:17.035446Z"}
+{"query": "ulcer", "selected_system": "Ayurveda", "event": "node_run_experts", "level": "info", "timestamp": "2026-07-02T18:30:17.038831Z"}
+{"selected_system": "Ayurveda", "candidate_domains": ["Ayurveda"], "event": "routing_decision", "level": "info", "timestamp": "2026-07-02T18:30:17.039353Z"}
+{"domain": "ayurveda", "query": "ulcer", "event": "retriever_start", "level": "info", "timestamp": "2026-07-02T18:30:17.040549Z"}
+{"domain": "siddha", "query": "ulcer", "event": "retriever_start", "level": "info", "timestamp": "2026-07-02T18:30:17.041228Z"}
+Generating embeddings with model 'llama-text-embed-v2'
+{"domain": "unani", "query": "ulcer", "event": "retriever_start", "level": "info", "timestamp": "2026-07-02T18:30:17.041869Z"}
+{"domain": "homeopathy", "query": "ulcer", "event": "retriever_start", "level": "info", "timestamp": "2026-07-02T18:30:17.043117Z"}
+Generating embeddings with model 'llama-text-embed-v2'
+{"domain": "yoga", "query": "ulcer", "event": "retriever_start", "level": "info", "timestamp": "2026-07-02T18:30:17.043599Z"}
+Generating embeddings with model 'llama-text-embed-v2'
+Generating embeddings with model 'llama-text-embed-v2'
+Generating embeddings with model 'llama-text-embed-v2'
+Querying index with top_k=10
+Querying index with top_k=10
+Querying index with top_k=10
+Querying index with top_k=10
+{"domain": "ayurveda", "dense": 10, "sparse": 10, "event": "retriever_results", "level": "info", "timestamp": "2026-07-02T18:30:19.461184Z"}
+{"domain": "ayurveda", "returned": 7, "event": "retriever_done", "level": "info", "timestamp": "2026-07-02T18:30:19.462585Z"}
+{"domain": "siddha", "dense": 10, "sparse": 10, "event": "retriever_results", "level": "info", "timestamp": "2026-07-02T18:30:19.506949Z"}
+{"domain": "siddha", "returned": 7, "event": "retriever_done", "level": "info", "timestamp": "2026-07-02T18:30:19.508284Z"}
+{"domain": "unani", "dense": 10, "sparse": 10, "event": "retriever_results", "level": "info", "timestamp": "2026-07-02T18:30:19.559922Z"}
+{"domain": "unani", "returned": 7, "event": "retriever_done", "level": "info", "timestamp": "2026-07-02T18:30:19.560647Z"}
+{"domain": "yoga", "dense": 10, "sparse": 10, "event": "retriever_results", "level": "info", "timestamp": "2026-07-02T18:30:19.573514Z"}
+{"domain": "yoga", "returned": 7, "event": "retriever_done", "level": "info", "timestamp": "2026-07-02T18:30:19.574704Z"}
+Querying index with top_k=10
+{"domain": "homeopathy", "dense": 10, "sparse": 0, "event": "retriever_results", "level": "info", "timestamp": "2026-07-02T18:30:19.911746Z"}
+{"domain": "homeopathy", "returned": 7, "event": "retriever_done", "level": "info", "timestamp": "2026-07-02T18:30:19.913118Z"}
+{"query": "ulcer", "event": "ayurveda_expert_start", "level": "info", "timestamp": "2026-07-02T18:30:19.913985Z"}
+{"query": "ulcer", "event": "siddha_expert_start", "level": "info", "timestamp": "2026-07-02T18:30:19.915088Z"}
+{"query": "ulcer", "event": "unani_expert_start", "level": "info", "timestamp": "2026-07-02T18:30:19.916955Z"}
+{"query": "ulcer", "event": "homeopathy_expert_start", "level": "info", "timestamp": "2026-07-02T18:30:19.918715Z"}
+{"query": "ulcer", "event": "yoga_expert_start", "level": "info", "timestamp": "2026-07-02T18:30:19.919872Z"}
+HTTP Request: POST https://api.groq.com/openai/v1/chat/completions "HTTP/1.1 429 Too Many Requests"
+Retrying request to /openai/v1/chat/completions in 11.000000 seconds
+HTTP Request: POST https://api.groq.com/openai/v1/chat/completions "HTTP/1.1 429 Too Many Requests"
+Retrying request to /openai/v1/chat/completions in 4.000000 seconds
+HTTP Request: POST https://api.groq.com/openai/v1/chat/completions "HTTP/1.1 429 Too Many Requests"
+Retrying request to /openai/v1/chat/completions in 8.000000 seconds
+HTTP Request: POST https://api.groq.com/openai/v1/chat/completions "HTTP/1.1 200 OK"
+groq_call_success
+{"confidence": 0.8, "event": "ayurveda_expert_done", "level": "info", "timestamp": "2026-07-02T18:30:20.575891Z"}
+HTTP Request: POST https://api.groq.com/openai/v1/chat/completions "HTTP/1.1 200 OK"
+groq_call_success
+{"confidence": 0.8, "event": "unani_expert_done", "level": "info", "timestamp": "2026-07-02T18:30:20.625721Z"}
+HTTP Request: POST https://api.groq.com/openai/v1/chat/completions "HTTP/1.1 429 Too Many Requests"
+Retrying request to /openai/v1/chat/completions in 1.000000 seconds
+HTTP Request: POST https://api.groq.com/openai/v1/chat/completions "HTTP/1.1 200 OK"
+groq_call_success
+{"confidence": 0.85, "event": "homeopathy_expert_done", "level": "info", "timestamp": "2026-07-02T18:30:25.962051Z"}
+HTTP Request: POST https://api.groq.com/openai/v1/chat/completions "HTTP/1.1 429 Too Many Requests"
+Retrying request to /openai/v1/chat/completions in 13.000000 seconds
+HTTP Request: POST https://api.groq.com/openai/v1/chat/completions "HTTP/1.1 429 Too Many Requests"
+Retrying request to /openai/v1/chat/completions in 14.000000 seconds
+HTTP Request: POST https://api.groq.com/openai/v1/chat/completions "HTTP/1.1 200 OK"
+groq_call_success
+{"poses": 2, "event": "yoga_expert_done", "level": "info", "timestamp": "2026-07-02T18:30:41.963714Z"}
+HTTP Request: POST https://api.groq.com/openai/v1/chat/completions "HTTP/1.1 429 Too Many Requests"
+groq_rate_limit_hit
+HTTP Request: POST https://api.groq.com/openai/v1/chat/completions "HTTP/1.1 429 Too Many Requests"
+Retrying request to /openai/v1/chat/completions in 14.000000 seconds
+{"domain": "Siddha", "event": "expert_timeout", "level": "error", "timestamp": "2026-07-02T18:30:47.928665Z"}
+{"ayurveda": true, "siddha": false, "unani": true, "homeopathy": true, "yoga": true, "event": "node_run_experts_done", "level": "info", "timestamp": "2026-07-02T18:30:47.929634Z"}
+{"event": "node_consensus", "level": "info", "timestamp": "2026-07-02T18:30:47.933364Z"}
+{"event": "consensus_agent_start", "level": "info", "timestamp": "2026-07-02T18:30:47.934094Z"}
+{"event": "node_yoga_image_search", "level": "info", "timestamp": "2026-07-02T18:30:47.935376Z"}
+{"num_poses": 2, "event": "yoga_image_search_start", "level": "info", "timestamp": "2026-07-02T18:30:47.936252Z"}
+HTTP Request: POST https://api.groq.com/openai/v1/chat/completions "HTTP/1.1 429 Too Many Requests"
+Retrying request to /openai/v1/chat/completions in 5.000000 seconds
+HTTP Request: GET https://commons.wikimedia.org/w/api.php?action=query&list=search&srsearch=Pawanmuktasana+Wind+yoga+pose&srnamespace=6&srlimit=3&format=json&origin=%2A "HTTP/1.1 200 OK"
+HTTP Request: GET https://commons.wikimedia.org/w/api.php?action=query&list=search&srsearch=Marjaryasana+Cat+Pose+yoga+pose&srnamespace=6&srlimit=3&format=json&origin=%2A "HTTP/1.1 200 OK"
+HTTP Request: GET https://commons.wikimedia.org/w/api.php?action=query&titles=File%3AYoga+at+Your+Park+-+Bitilasana.jpg&prop=imageinfo&iiprop=url%7Cthumburl&iiurlwidth=400&format=json&origin=%2A "HTTP/1.1 200 OK"
+HTTP Request: GET https://en.wikipedia.org/api/rest_v1/page/summary/Pawanmuktasana_Wind "HTTP/1.1 404 Not Found"
+{"pose": "Pawanmuktasana (Wind-Relieving Pose) \u2014 5 minutes, ", "event": "yoga_image_not_found", "level": "warning", "timestamp": "2026-07-02T18:30:51.073703Z"}
+{"found": 1, "event": "yoga_image_search_done", "level": "info", "timestamp": "2026-07-02T18:30:51.075116Z"}
+HTTP Request: POST https://api.groq.com/openai/v1/chat/completions "HTTP/1.1 200 OK"
+groq_call_success
+{"themes": 3, "event": "consensus_agent_done", "level": "info", "timestamp": "2026-07-02T18:30:54.663523Z"}
+{"event": "node_reviewer", "level": "info", "timestamp": "2026-07-02T18:30:54.668352Z"}
+{"event": "reviewer_agent_start", "level": "info", "timestamp": "2026-07-02T18:30:54.669601Z"}
+HTTP Request: POST https://api.groq.com/openai/v1/chat/completions "HTTP/1.1 429 Too Many Requests"
+Retrying request to /openai/v1/chat/completions in 10.000000 seconds
+HTTP Request: POST https://api.groq.com/openai/v1/chat/completions "HTTP/1.1 200 OK"
+groq_call_success
+{"validated": true, "warnings": 0, "event": "reviewer_agent_done", "level": "info", "timestamp": "2026-07-02T18:31:05.476876Z"}
+ {"event": "sanjivi_backend_shutting_down", "level": "info", "timestamp": "2026-07-02T18:41:33.873432Z"}
+{"model": "llama-3.3-70b-versatile", "index": "sanjivi-ayush", "event": "sanjivi_backend_starting", "level": "info", "timestamp": "2026-07-02T18:42:03.492552Z"}
+{"event": "langgraph_compiled", "level": "info", "timestamp": "2026-07-02T18:42:03.555852Z"}
+Listing indexes
+HTTP Request: GET https://api.pinecone.io/indexes "HTTP/1.1 200 OK"
+Describing index 'sanjivi-ayush'
+HTTP Request: GET https://api.pinecone.io/indexes/sanjivi-ayush "HTTP/1.1 200 OK"
+Index client created for host https://sanjivi-ayush-jvhkk48.svc.aped-4627-b74a.pinecone.io
+{"event": "pinecone_index_cached_at_startup", "level": "info", "timestamp": "2026-07-02T18:42:09.841105Z"}
+{"domain": "ayurveda", "num_docs": 870, "event": "bm25_index_loaded", "level": "info", "timestamp": "2026-07-02T18:42:09.875016Z"}
+{"domain": "siddha", "num_docs": 426, "event": "bm25_index_loaded", "level": "info", "timestamp": "2026-07-02T18:42:09.922253Z"}
+{"domain": "unani", "num_docs": 2030, "event": "bm25_index_loaded", "level": "info", "timestamp": "2026-07-02T18:42:10.059606Z"}
+{"domain": "yoga", "num_docs": 970, "event": "bm25_index_loaded", "level": "info", "timestamp": "2026-07-02T18:42:10.144965Z"}
+{"event": "sanjivi_backend_ready", "level": "info", "timestamp": "2026-07-02T18:42:10.145957Z"}
+{"request_id": "6633885c-019e-4e85-ae01-3ab8578e70db", "path": "/docs", "method": "GET", "event": "http_request_start", "level": "info", "timestamp": "2026-07-02T18:42:21.489224Z"}
+{"request_id": "6633885c-019e-4e85-ae01-3ab8578e70db", "path": "/docs", "method": "GET", "status_code": 200, "duration_ms": 0.84, "event": "http_request_done", "level": "info", "timestamp": "2026-07-02T18:42:21.490021Z"}
+INFO:     127.0.0.1:64632 - "GET /docs HTTP/1.1" 200 OK
+ {"request_id": "63a95351-0cd2-4375-bc43-bd2658858cdb", "path": "/docs", "method": "GET", "event": "http_request_start", "level": "info", "timestamp": "2026-07-02T18:43:32.147891Z"}
+{"request_id": "63a95351-0cd2-4375-bc43-bd2658858cdb", "path": "/docs", "method": "GET", "status_code": 200, "duration_ms": 2.65, "event": "http_request_done", "level": "info", "timestamp": "2026-07-02T18:43:32.150538Z"}
+INFO:     127.0.0.1:64462 - "GET /docs HTTP/1.1" 200 OK
+{"event": "sanjivi_backend_shutting_down", "level": "info", "timestamp": "2026-07-02T18:43:44.209769Z"}
+{"model": "llama-3.3-70b-versatile", "index": "sanjivi-ayush", "event": "sanjivi_backend_starting", "level": "info", "timestamp": "2026-07-02T18:44:02.546158Z"}
+{"event": "langgraph_compiled", "level": "info", "timestamp": "2026-07-02T18:44:02.597503Z"}
+Listing indexes
+HTTP Request: GET https://api.pinecone.io/indexes "HTTP/1.1 200 OK"
+Describing index 'sanjivi-ayush'
+HTTP Request: GET https://api.pinecone.io/indexes/sanjivi-ayush "HTTP/1.1 200 OK"
+Index client created for host https://sanjivi-ayush-jvhkk48.svc.aped-4627-b74a.pinecone.io
+{"event": "pinecone_index_cached_at_startup", "level": "info", "timestamp": "2026-07-02T18:44:07.274265Z"}
+{"domain": "ayurveda", "num_docs": 870, "event": "bm25_index_loaded", "level": "info", "timestamp": "2026-07-02T18:44:07.302851Z"}
+{"domain": "siddha", "num_docs": 426, "event": "bm25_index_loaded", "level": "info", "timestamp": "2026-07-02T18:44:07.452081Z"}
+{"domain": "unani", "num_docs": 2030, "event": "bm25_index_loaded", "level": "info", "timestamp": "2026-07-02T18:44:07.565936Z"}
+{"domain": "yoga", "num_docs": 970, "event": "bm25_index_loaded", "level": "info", "timestamp": "2026-07-02T18:44:07.637074Z"}
+{"event": "sanjivi_backend_ready", "level": "info", "timestamp": "2026-07-02T18:44:07.638738Z"}
+{"request_id": "1605172a-e7d6-403b-a7e5-4620906fc6d8", "path": "/chat/stream", "method": "OPTIONS", "event": "http_request_start", "level": "info", "timestamp": "2026-07-02T18:44:07.657154Z"}
+{"request_id": "1605172a-e7d6-403b-a7e5-4620906fc6d8", "path": "/chat/stream", "method": "OPTIONS", "status_code": 200, "duration_ms": 2.72, "event": "http_request_done", "level": "info", "timestamp": "2026-07-02T18:44:07.659787Z"}
+INFO:     127.0.0.1:49738 - "OPTIONS /chat/stream HTTP/1.1" 200 OK
+{"request_id": "a737a86b-6861-42b4-9ec1-7e530e4bc7db", "path": "/chat/stream", "method": "POST", "event": "http_request_start", "level": "info", "timestamp": "2026-07-02T18:44:07.665294Z"}
+{"request_id": "7aa5978e-ee51-4d34-b4f3-583cec162bbd", "query": "kidney stones", "event": "api_chat_stream_request_received", "level": "info", "timestamp": "2026-07-02T18:44:07.670554Z"}
+{"query": "kidney stones", "event": "sanjivi_stream_start", "level": "info", "timestamp": "2026-07-02T18:44:07.672252Z"}
+{"request_id": "a737a86b-6861-42b4-9ec1-7e530e4bc7db", "path": "/chat/stream", "method": "POST", "status_code": 200, "duration_ms": 19.26, "event": "http_request_done", "level": "info", "timestamp": "2026-07-02T18:44:07.684551Z"}
+INFO:     127.0.0.1:54431 - "POST /chat/stream HTTP/1.1" 200 OK
+{"query": "kidney stones", "event": "node_emergency_check", "level": "info", "timestamp": "2026-07-02T18:44:07.687466Z"}
+HTTP Request: POST https://api.groq.com/openai/v1/chat/completions "HTTP/1.1 200 OK"
+groq_call_success
+{"is_emergency": true, "reason": "Kidney stones can cause severe pain and may require immediate medical attention.", "event": "emergency_screen", "level": "info", "timestamp": "2026-07-02T18:44:11.075679Z"}
+ {"request_id": "ce46dd75-96fa-4604-b730-531926cef1d7", "path": "/docs", "method": "GET", "event": "http_request_start", "level": "info", "timestamp": "2026-07-02T18:48:40.112150Z"}
+{"request_id": "ce46dd75-96fa-4604-b730-531926cef1d7", "path": "/docs", "method": "GET", "status_code": 200, "duration_ms": 2.08, "event": "http_request_done", "level": "info", "timestamp": "2026-07-02T18:48:40.114187Z"}
+INFO:     127.0.0.1:51988 - "GET /docs HTTP/1.1" 200 OK
+{"event": "sanjivi_backend_shutting_down", "level": "info", "timestamp": "2026-07-02T18:48:46.665603Z"}
+{"model": "llama-3.3-70b-versatile", "index": "sanjivi-ayush", "event": "sanjivi_backend_starting", "level": "info", "timestamp": "2026-07-02T18:48:55.846556Z"}
+{"event": "langgraph_compiled", "level": "info", "timestamp": "2026-07-02T18:48:55.871345Z"}
+Listing indexes
+HTTP Request: GET https://api.pinecone.io/indexes "HTTP/1.1 200 OK"
+Describing index 'sanjivi-ayush'
+HTTP Request: GET https://api.pinecone.io/indexes/sanjivi-ayush "HTTP/1.1 200 OK"
+Index client created for host https://sanjivi-ayush-jvhkk48.svc.aped-4627-b74a.pinecone.io
+{"event": "pinecone_index_cached_at_startup", "level": "info", "timestamp": "2026-07-02T18:48:58.859353Z"}
+{"domain": "ayurveda", "num_docs": 870, "event": "bm25_index_loaded", "level": "info", "timestamp": "2026-07-02T18:48:58.869883Z"}
+{"domain": "siddha", "num_docs": 426, "event": "bm25_index_loaded", "level": "info", "timestamp": "2026-07-02T18:48:58.882546Z"}
+{"domain": "unani", "num_docs": 2030, "event": "bm25_index_loaded", "level": "info", "timestamp": "2026-07-02T18:48:58.920259Z"}
+{"domain": "yoga", "num_docs": 970, "event": "bm25_index_loaded", "level": "info", "timestamp": "2026-07-02T18:48:58.942717Z"}
+{"event": "sanjivi_backend_ready", "level": "info", "timestamp": "2026-07-02T18:48:58.943855Z"}
+ {"request_id": "2ef2333a-398d-436c-8abd-77ba2ca2d207", "path": "/docs", "method": "GET", "event": "http_request_start", "level": "info", "timestamp": "2026-07-02T18:55:30.139298Z"}
+{"request_id": "2ef2333a-398d-436c-8abd-77ba2ca2d207", "path": "/docs", "method": "GET", "status_code": 200, "duration_ms": 1.81, "event": "http_request_done", "level": "info", "timestamp": "2026-07-02T18:55:30.141047Z"}
+INFO:     127.0.0.1:50355 - "GET /docs HTTP/1.1" 200 OK
+{"event": "sanjivi_backend_shutting_down", "level": "info", "timestamp": "2026-07-02T18:56:31.398452Z"}
+{"model": "llama-3.3-70b-versatile", "index": "sanjivi-ayush", "event": "sanjivi_backend_starting", "level": "info", "timestamp": "2026-07-02T18:56:54.252314Z"}
+{"event": "langgraph_compiled", "level": "info", "timestamp": "2026-07-02T18:56:54.304204Z"}
+Listing indexes
+HTTP Request: GET https://api.pinecone.io/indexes "HTTP/1.1 200 OK"
+Describing index 'sanjivi-ayush'
+HTTP Request: GET https://api.pinecone.io/indexes/sanjivi-ayush "HTTP/1.1 200 OK"
+Index client created for host https://sanjivi-ayush-jvhkk48.svc.aped-4627-b74a.pinecone.io
+{"event": "pinecone_index_cached_at_startup", "level": "info", "timestamp": "2026-07-02T18:56:58.553124Z"}
+{"domain": "ayurveda", "num_docs": 870, "event": "bm25_index_loaded", "level": "info", "timestamp": "2026-07-02T18:56:58.581717Z"}
+{"domain": "siddha", "num_docs": 426, "event": "bm25_index_loaded", "level": "info", "timestamp": "2026-07-02T18:56:58.751073Z"}
+{"domain": "unani", "num_docs": 2030, "event": "bm25_index_loaded", "level": "info", "timestamp": "2026-07-02T18:56:58.879091Z"}
+{"domain": "yoga", "num_docs": 970, "event": "bm25_index_loaded", "level": "info", "timestamp": "2026-07-02T18:56:58.958468Z"}
+{"event": "sanjivi_backend_ready", "level": "info", "timestamp": "2026-07-02T18:56:58.960286Z"}

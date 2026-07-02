@@ -21,3 +21,12 @@ Creating turbopack project {
 ✓ Compiled in 180ms
  GET /chat 200 in 225ms (next.js: 120ms, application-code: 104ms)
  GET /chat 200 in 245ms (next.js: 5ms, application-code: 240ms)
+ GET /chat 200 in 488ms (next.js: 74ms, application-code: 414ms)
+✓ Compiled in 66ms
+ GET /chat 200 in 221ms (next.js: 131ms, application-code: 90ms)
+✓ Compiled in 55ms
+ GET /chat 200 in 191ms (next.js: 97ms, application-code: 94ms)
+✓ Compiled in 73ms
+ GET /chat 200 in 170ms (next.js: 78ms, application-code: 92ms)
+✓ Compiled in 102ms
+ GET /chat 200 in 195ms (next.js: 100ms, application-code: 96ms)

@@ -27,6 +27,18 @@ log = get_logger(__name__)
 # pyrefly: ignore [missing-import]
 from duckduckgo_search import DDGS
 
+import math
+
+def haversine_distance(lat1: float, lon1: float, lat2: float, lon2: float) -> float:
+    """Calculate the great-circle distance between two points in km."""
+    R = 6371.0
+    dlat = math.radians(lat2 - lat1)
+    dlon = math.radians(lon2 - lon1)
+    a = (math.sin(dlat / 2) ** 2 +
+         math.cos(math.radians(lat1)) * math.cos(math.radians(lat2)) * math.sin(dlon / 2) ** 2)
+    c = 2 * math.atan2(math.sqrt(a), math.sqrt(1 - a))
+    return R * c
+
 # ── Hospital lookup ───────────────────────────────────────────────────────────
 
 async def _fetch_nearby_hospitals(
@@ -35,39 +47,108 @@ async def _fetch_nearby_hospitals(
     radius_m: int = 5000,
     max_results: int = 4,
 ) -> list[HospitalInfo]:
-    """Return nearby hospital options with reliable map links."""
-    maps_query = quote_plus(f"emergency hospitals near {lat},{lng}")
-    hospitals: list[HospitalInfo] = [
-        HospitalInfo(
-            name="Nearby emergency hospitals",
-            address="Open the map link to see hospitals closest to your current location.",
-            phone=None,
-            distance_km=None,
-            maps_url=f"https://www.google.com/maps/search/?api=1&query={maps_query}",
-        )
-    ]
+    """
+    Return nearby hospital options with reliable map links.
+    Queries the OpenStreetMap Overpass API for geolocated hospitals,
+    computes precise distance, and falls back to DuckDuckGo search if needed.
+    """
+    hospitals: list[HospitalInfo] = []
 
-    try:
-        query = f"hospital emergency near {lat},{lng}"
-        with DDGS() as ddgs:
-            results = list(ddgs.text(query, max_results=max_results))
+    # 1. Try OSM Overpass API (first at radius_m, then expanded if no results found)
+    for lookup_radius in [radius_m, 15000]:
+        if hospitals:
+            break
+        overpass_url = "https://overpass-api.de/api/interpreter"
+        query = f"""[out:json];
+        (
+          node(around:{lookup_radius},{lat},{lng})[amenity=hospital];
+          way(around:{lookup_radius},{lat},{lng})[amenity=hospital];
+          relation(around:{lookup_radius},{lat},{lng})[amenity=hospital];
+          node(around:{lookup_radius},{lat},{lng})["healthcare"="hospital"];
+          way(around:{lookup_radius},{lat},{lng})["healthcare"="hospital"];
+          relation(around:{lookup_radius},{lat},{lng})["healthcare"="hospital"];
+        );
+        out center;"""
+        try:
+            async with httpx.AsyncClient(timeout=10.0) as client:
+                response = await client.post(overpass_url, data={"data": query})
+                if response.status_code == 200:
+                    data = response.json()
+                    elements = data.get("elements", [])
+                    for el in elements:
+                        tags = el.get("tags", {})
+                        name = tags.get("name") or tags.get("name:en") or tags.get("official_name")
+                        if not name:
+                            continue
+                        
+                        h_lat = el.get("lat") or el.get("center", {}).get("lat")
+                        h_lon = el.get("lon") or el.get("center", {}).get("lon")
+                        if h_lat is None or h_lon is None:
+                            continue
+                        
+                        dist = haversine_distance(lat, lng, h_lat, h_lon)
+                        
+                        # Construct a clean address from OSM tags
+                        street = tags.get("addr:street")
+                        city = tags.get("addr:city") or tags.get("addr:suburb")
+                        housenumber = tags.get("addr:housenumber")
+                        address_parts = [p for p in [housenumber, street, city] if p]
+                        address = ", ".join(address_parts) if address_parts else tags.get("addr:full") or "Address details not available in OSM."
+                        
+                        phone = tags.get("phone") or tags.get("contact:phone") or tags.get("emergency:phone")
+                        maps_url = f"https://www.google.com/maps/dir/?api=1&origin={lat},{lng}&destination={h_lat},{h_lon}"
+                        
+                        hospitals.append(
+                            HospitalInfo(
+                                name=name,
+                                address=address,
+                                phone=phone,
+                                distance_km=round(dist, 2),
+                                maps_url=maps_url,
+                            )
+                        )
+                    
+                    # Sort by distance
+                    hospitals.sort(key=lambda h: h.distance_km if h.distance_km is not None else 999.0)
+        except Exception as exc:
+            log.error("overpass_api_lookup_failed", error=str(exc))
+            break # Skip to fallback if Overpass is failing/blocking
 
-            for place in results:
-                title = place.get("title") or "Hospital search result"
-                href = place.get("href") or f"https://www.google.com/maps/search/?api=1&query={quote_plus(title)}"
-                body = place.get("body") or "Open this result for hospital details."
-
-                hospitals.append(
-                    HospitalInfo(
-                        name=title,
-                        address=body,
-                        phone=None,
-                        distance_km=None,
-                        maps_url=href,
+    # 2. Fallback to DuckDuckGo search if Overpass returned nothing
+    if not hospitals:
+        log.info("osm_overpass_returned_empty_falling_back_to_ddg")
+        try:
+            query = f"hospital emergency near {lat},{lng}"
+            with DDGS() as ddgs:
+                results = list(ddgs.text(query, max_results=max_results))
+                for place in results:
+                    title = place.get("title") or "Hospital search result"
+                    href = place.get("href") or f"https://www.google.com/maps/search/?api=1&query={quote_plus(title)}"
+                    body = place.get("body") or "Open this result for hospital details."
+                    hospitals.append(
+                        HospitalInfo(
+                            name=title,
+                            address=body,
+                            phone=None,
+                            distance_km=None,
+                            maps_url=href,
+                        )
                     )
-                )
-    except Exception as exc:
-        log.error("hospital_search_error", error=str(exc))
+        except Exception as exc:
+            log.error("hospital_ddg_fallback_failed", error=str(exc))
+
+    # 3. Add default general Google Maps search query if everything fails
+    if not hospitals:
+        maps_query = quote_plus(f"emergency hospitals near {lat},{lng}")
+        hospitals.append(
+            HospitalInfo(
+                name="Nearby emergency hospitals",
+                address="Open the map link to see hospitals closest to your current location.",
+                phone=None,
+                distance_km=None,
+                maps_url=f"https://www.google.com/maps/search/?api=1&query={maps_query}",
+            )
+        )
 
     return hospitals[:max_results]
 

@@ -69,3 +69,10 @@ INFO:     Started server process [24480]
 INFO:     Waiting for application startup.
 INFO:     Application startup complete.
 WARNING:  WatchFiles detected changes in 'app\agents\emergency.py'. Reloading...
+INFO:     Shutting down
+INFO:     Waiting for application shutdown.
+INFO:     Application shutdown complete.
+INFO:     Finished server process [24480]
+INFO:     Started server process [14928]
+INFO:     Waiting for application startup.
+INFO:     Application startup complete.
