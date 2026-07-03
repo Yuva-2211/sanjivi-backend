@@ -52,7 +52,9 @@ class Settings(BaseSettings):
     top_k_rerank: int = Field(default=3)
     top_k_final: int = Field(default=3)
     rrf_k: int = Field(default=60)
-    context_max_chars: int = Field(default=3200)
+    context_max_chars: int = Field(default=2000)
+
+ 
 
     # ── Per-agent LLM routing ───────────────────────────────────────────────────
     # emergency + reviewer stay on fast 8b model for low latency (Groq)
@@ -66,14 +68,15 @@ class Settings(BaseSettings):
     consensus_model: str = Field(default="openai/gpt-oss-120b:free")
     reviewer_model: str = Field(default="llama-3.1-8b-instant")
 
-    emergency_max_tokens: int = Field(default=500)
-    ayurveda_max_tokens: int = Field(default=900)
-    siddha_max_tokens: int = Field(default=900)
-    unani_max_tokens: int = Field(default=900)
-    homeopathy_max_tokens: int = Field(default=900)
-    yoga_max_tokens: int = Field(default=900)
-    consensus_max_tokens: int = Field(default=1000)
-    reviewer_max_tokens: int = Field(default=700)
+    
+    emergency_max_tokens: int = Field(default=150)
+    ayurveda_max_tokens: int = Field(default=500)
+    siddha_max_tokens: int = Field(default=500)
+    unani_max_tokens: int = Field(default=500)
+    homeopathy_max_tokens: int = Field(default=500)
+    yoga_max_tokens: int = Field(default=500)
+    consensus_max_tokens: int = Field(default=600)
+    reviewer_max_tokens: int = Field(default=300)
 
     # ── Concurrency & Rate Control ─────────────────────────────────────────────
     # How many expert LLM calls can run concurrently (2 = balanced, 5 = burst)
