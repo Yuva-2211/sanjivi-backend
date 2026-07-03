@@ -359,4 +359,5 @@ Index client created for host https://sanjivi-ayush-jvhkk48.svc.aped-4627-b74a.p
 {"domain": "unani", "num_docs": 2030, "event": "bm25_index_loaded", "level": "info", "timestamp": "2026-07-02T18:56:58.879091Z"}
 {"domain": "yoga", "num_docs": 970, "event": "bm25_index_loaded", "level": "info", "timestamp": "2026-07-02T18:56:58.958468Z"}
 {"event": "sanjivi_backend_ready", "level": "info", "timestamp": "2026-07-02T18:56:58.960286Z"}
- 
+ {"event": "sanjivi_backend_shutting_down", "level": "info", "timestamp": "2026-07-02T19:26:39.014852Z"}
+      

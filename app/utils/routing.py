@@ -1,8 +1,9 @@
 """Query routing utilities for Sanjivi AI.
 
-This module provides lightweight classification of user queries into
-medical domains, with deterministic keyword mappings and a conservative
-Multisystem fallback.
+Routing modes:
+  - "Multisystem"  → Always run ALL 5 AYUSH experts (no routing needed)
+  - "Auto"         → Router selects only the relevant experts for the query
+  - any single system name → Run only that one expert
 """
 
 from __future__ import annotations
@@ -11,6 +12,7 @@ import re
 from typing import Iterable
 
 VALID_SYSTEMS = [
+    "Auto",
     "Multisystem",
     "Ayurveda",
     "Siddha",
@@ -19,42 +21,54 @@ VALID_SYSTEMS = [
     "Yoga",
 ]
 
+ALL_EXPERT_DOMAINS = ["Ayurveda", "Siddha", "Unani", "Homeopathy", "Yoga"]
+
+# Broad keyword → domain mappings used by the Auto router.
+# Intentionally inclusive: prefer false positives over missing a relevant system.
 DOMAIN_KEYWORDS: dict[str, list[str]] = {
     "Ayurveda": [
         r"joint", r"stiff", r"pain", r"back pain", r"headache", r"migraine", r"stress",
         r"digest", r"constipation", r"diarrhea", r"nausea", r"acne",
         r"skin", r"women", r"menstrual", r"menopause", r"wellness",
         r"sleep", r"fatigue", r"anxiety", r"healthy", r"hair",
+        r"weight", r"liver", r"kidney", r"thyroid", r"sugar", r"diabetes",
+        r"detox", r"immunity", r"fever", r"inflammation",
     ],
     "Siddha": [
-        r"joint", r"stiff", r"back pain", r"headache", r"migraine", r"women", r"menstrual",
-        r"menopause", r"skin", r"acne", r"wellness",
+        r"joint", r"stiff", r"back pain", r"headache", r"migraine",
+        r"women", r"menstrual", r"menopause", r"skin", r"acne",
+        r"wellness", r"fever", r"rheumatic", r"vatha", r"pitha", r"kabha",
+        r"varma", r"thokkanam",
     ],
     "Unani": [
         r"digest", r"constipation", r"diarrhea", r"stomach", r"gas",
         r"acid reflux", r"cough", r"cold", r"asthma", r"breath", r"respiratory",
-        r"sinus",
+        r"sinus", r"liver", r"kidney", r"bladder", r"uti", r"infection",
+        r"fever", r"inflammation", r"immune",
     ],
     "Homeopathy": [
-        r"skin", r"acne", r"rash", r"eczema", r"dermatitis",
-        r"homeopathy", r"remedy", r"potency",
+        r"skin", r"acne", r"rash", r"eczema", r"dermatitis", r"allergy",
+        r"homeopathy", r"remedy", r"potency", r"chronic", r"recurring",
+        r"anxiety", r"depression", r"grief", r"sensitivity",
     ],
     "Yoga": [
         r"stress", r"anxiety", r"sleep", r"fatigue", r"wellness", r"lifestyle",
         r"breath", r"pranayama", r"meditation", r"energy", r"stiff",
+        r"posture", r"flexibility", r"balance", r"pain", r"mental",
+        r"depression", r"focus", r"weight",
     ],
 }
 
-DEFAULT_DOMAIN = ["Multisystem"]
+DEFAULT_AUTO_DOMAINS = ALL_EXPERT_DOMAINS  # Fallback when classifier is unsure
 
 
 def normalize_selected_system(selected_system: str | None) -> str:
     if not selected_system or not isinstance(selected_system, str):
-        return "Multisystem"
+        return "Auto"
     normalized = selected_system.strip().title()
-    if normalized == "Ayush":
+    if normalized in ("Ayush",):
         return "Multisystem"
-    return normalized if normalized in VALID_SYSTEMS else "Multisystem"
+    return normalized if normalized in VALID_SYSTEMS else "Auto"
 
 
 def _matches_query(query: str, patterns: Iterable[str]) -> bool:
@@ -66,13 +80,19 @@ def _matches_query(query: str, patterns: Iterable[str]) -> bool:
 
 
 def classify_query_domains(query: str) -> list[str]:
-    """Classify a user query into one or more AYUSH domains."""
+    """
+    Classify a user query into one or more AYUSH domains.
+
+    This is used only in "Auto" mode. The classifier is intentionally
+    broad: it selects every system that can provide meaningful input,
+    not just the single "best" match.
+    """
     if not query or not isinstance(query, str):
-        return DEFAULT_DOMAIN
+        return DEFAULT_AUTO_DOMAINS
 
     normalized_query = " ".join(re.findall(r"[a-zA-Z0-9]+", query.lower()))
     if not normalized_query:
-        return DEFAULT_DOMAIN
+        return DEFAULT_AUTO_DOMAINS
 
     selected: list[str] = []
     for domain, keywords in DOMAIN_KEYWORDS.items():
@@ -80,18 +100,16 @@ def classify_query_domains(query: str) -> list[str]:
             selected.append(domain)
 
     if not selected:
-        return DEFAULT_DOMAIN
+        return DEFAULT_AUTO_DOMAINS
 
-    # Ensure Yoga and Ayurveda overlap for lifestyle/general wellness queries.
+    # Ensure Yoga and Ayurveda always pair for lifestyle/wellness queries
     if "Yoga" in selected and "Ayurveda" not in selected:
-        if _matches_query(normalized_query, [r"wellness", r"lifestyle", r"healthy"]):
+        if _matches_query(normalized_query, [r"wellness", r"lifestyle", r"healthy", r"stress", r"pain"]):
             selected.append("Ayurveda")
 
-    # Do not randomly include Homeopathy unless a skin or explicitly homeopathic signal exists.
-    if "Homeopathy" in selected and not _matches_query(
-        normalized_query,
-        [r"skin", r"acne", r"rash", r"eczema", r"homeopathy", r"potency"],
-    ):
-        selected.remove("Homeopathy")
+    # Include Siddha alongside Ayurveda for common overlap conditions
+    if "Ayurveda" in selected and "Siddha" not in selected:
+        if _matches_query(normalized_query, [r"joint", r"stiff", r"pain", r"skin", r"fever", r"menstrual"]):
+            selected.append("Siddha")
 
-    return selected if selected else DEFAULT_DOMAIN
+    return selected

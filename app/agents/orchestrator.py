@@ -154,11 +154,24 @@ async def run_experts_node(state: SanjiviState) -> dict:
     }
 
     if selected_system == "Multisystem":
+        # Multisystem = explicit request to hear from ALL five experts, no routing.
+        candidate_domains = list(expert_map.keys())
+        log.info("routing_mode_multisystem_all_experts")
+    elif selected_system in ("Auto", "Multisystem"):
+        # Auto = let the router decide which experts are relevant.
         candidate_domains = classify_query_domains(query)
+        # If classifier returns Multisystem sentinel, expand to all experts
         if candidate_domains == ["Multisystem"]:
             candidate_domains = list(expert_map.keys())
+        log.info("routing_mode_auto", candidate_domains=candidate_domains)
+    elif selected_system in expert_map:
+        # Single-system = user explicitly chose one AYUSH system.
+        candidate_domains = [selected_system]
+        log.info("routing_mode_single", selected_system=selected_system)
     else:
-        candidate_domains = [selected_system] if selected_system in expert_map else list(expert_map.keys())
+        # Unknown value → treat as Auto for safety.
+        candidate_domains = classify_query_domains(query)
+        log.info("routing_mode_fallback_auto", candidate_domains=candidate_domains)
 
     log.info("routing_decision", selected_system=selected_system, candidate_domains=candidate_domains)
 
