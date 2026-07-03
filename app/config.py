@@ -23,7 +23,7 @@ class Settings(BaseSettings):
 
     # ── LLM ──────────────────────────────────────────────────────────────────
     groq_api_key: str = Field(default="", description="Groq API key")
-    groq_api_keys_str: str = Field(default="", description="Comma-separated list of Groq API keys")
+    openrouter_api_key: str = Field(default="", description="OpenRouter API key")
     groq_model: str = Field(
         default="llama-3.3-70b-versatile",
         description="Groq model identifier",
@@ -55,15 +55,15 @@ class Settings(BaseSettings):
     context_max_chars: int = Field(default=3200)
 
     # ── Per-agent LLM routing ───────────────────────────────────────────────────
-    # emergency + reviewer stay on fast 8b model for low latency
-    # Clinical agents + consensus use openai/gpt-oss-120b via Groq for best quality
+    # emergency + reviewer stay on fast 8b model for low latency (Groq)
+    # Clinical agents + consensus use openai/gpt-oss-120b:free via OpenRouter for reasoning
     emergency_model: str = Field(default="llama-3.1-8b-instant")
-    ayurveda_model: str = Field(default="openai/gpt-oss-120b")
-    siddha_model: str = Field(default="openai/gpt-oss-120b")
-    unani_model: str = Field(default="openai/gpt-oss-120b")
-    homeopathy_model: str = Field(default="openai/gpt-oss-120b")
-    yoga_model: str = Field(default="openai/gpt-oss-120b")
-    consensus_model: str = Field(default="openai/gpt-oss-120b")
+    ayurveda_model: str = Field(default="openai/gpt-oss-120b:free")
+    siddha_model: str = Field(default="openai/gpt-oss-120b:free")
+    unani_model: str = Field(default="openai/gpt-oss-120b:free")
+    homeopathy_model: str = Field(default="openai/gpt-oss-120b:free")
+    yoga_model: str = Field(default="openai/gpt-oss-120b:free")
+    consensus_model: str = Field(default="openai/gpt-oss-120b:free")
     reviewer_model: str = Field(default="llama-3.1-8b-instant")
 
     emergency_max_tokens: int = Field(default=500)
@@ -122,22 +122,14 @@ class Settings(BaseSettings):
         if values.top_k_rerank < values.top_k_final:
             raise ValueError("top_k_rerank must be greater than or equal to top_k_final")
 
-        if not values.groq_api_key and not values.groq_api_keys_str:
-            raise ValueError("Either GROQ_API_KEY or GROQ_API_KEYS_STR must be set for Sanjivi AI to function.")
+        if not values.groq_api_key:
+            raise ValueError("GROQ_API_KEY must be set for Sanjivi AI to function.")
+        if not values.openrouter_api_key:
+            raise ValueError("OPENROUTER_API_KEY must be set for Sanjivi AI to function.")
         if not values.pinecone_api_key:
             raise ValueError("PINECONE_API_KEY must be set for Sanjivi AI to function.")
 
         return values
-
-    @property
-    def groq_api_keys(self) -> list[str]:
-        """Return the list of configured Groq API keys, supporting rotation."""
-        keys = []
-        if self.groq_api_keys_str:
-            keys.extend([k.strip() for k in self.groq_api_keys_str.split(",") if k.strip()])
-        if self.groq_api_key and self.groq_api_key not in keys:
-            keys.append(self.groq_api_key)
-        return keys
 
 @lru_cache(maxsize=1)
 def get_settings() -> Settings:
