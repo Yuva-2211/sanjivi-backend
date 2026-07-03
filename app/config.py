@@ -22,8 +22,11 @@ class Settings(BaseSettings):
     )
 
     # ── LLM ──────────────────────────────────────────────────────────────────
-    groq_api_key: str = Field(default="", description="Groq API key")
-    openrouter_api_key: str = Field(default="", description="OpenRouter API key")
+    groq_api_key: str = Field(default="", description="Primary Groq API key")
+    openrouter_api_key: str = Field(default="", description="Primary OpenRouter API key")
+    # Comma-separated list for key rotation — add one per OpenRouter account you create.
+    # e.g. sk-or-v1-aaa,sk-or-v1-bbb,sk-or-v1-ccc
+    openrouter_api_keys_str: str = Field(default="", description="Comma-separated OpenRouter API keys for rotation")
     groq_model: str = Field(
         default="llama-3.3-70b-versatile",
         description="Groq model identifier",
