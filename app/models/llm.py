@@ -1,13 +1,13 @@
 """
 LLM provider — Groq via LangChain.
 
-Concurrency architecture
-========================
+Concurrency & Key Rotation Architecture
+=======================================
 Each type of Groq call has its own "lane" semaphore to prevent low-priority
 expert calls from blocking high-priority emergency checks or post-processing:
 
-  _global_semaphore   → hard cap on total concurrent Groq API requests
-  _expert_semaphore   → throttles the 5 domain expert agents
+  _global_semaphore    → hard cap on total concurrent Groq API requests
+  _expert_semaphore    → throttles the 5 domain expert agents
   _emergency_semaphore → reserved lane for emergency screening (never blocked)
   _consensus_semaphore → post-processing, runs only after experts finish
   _reviewer_semaphore  → final safety check, runs only after consensus
@@ -15,10 +15,14 @@ expert calls from blocking high-priority emergency checks or post-processing:
 Every LLM call must acquire BOTH _global_semaphore and its category semaphore.
 This ensures type-level isolation while also respecting the global rate limit.
 
-Retry policy
-============
-3 attempts with exponential backoff: base^1, base^2, base^3
-Default base = 2 → waits: 2s, 4s, 8s (max 14s before giving up)
+Key Rotation (wiser scheduling)
+===============================
+Supports multi-key rotation via `GROQ_API_KEYS_STR` to completely bypass 429 rate
+limits. If a key hits a 429:
+  1. The key is put on a temporary cooldown (e.g. 45 seconds).
+  2. The manager immediately selects the next healthy, non-cooldown key.
+  3. The request is retried with the new key immediately without sleeping.
+  4. If all keys are on cooldown, the system pauses until the first key recovers.
 """
 
 from __future__ import annotations
@@ -26,6 +30,7 @@ from __future__ import annotations
 import logging
 import asyncio
 import random
+import time
 from functools import lru_cache
 from typing import Any, Literal
 
@@ -37,6 +42,70 @@ from app.utils.helpers import parse_json_response
 
 
 logger = logging.getLogger(__name__)
+
+# ── Key Manager ───────────────────────────────────────────────────────────────
+
+class GroqKeyManager:
+    """
+    Manages a pool of Groq API keys, tracking rate limits (cooldowns)
+    and scheduling keys to maximize concurrency and avoid 429s.
+    """
+    def __init__(self):
+        self._keys: list[str] = []
+        self._cooldowns: dict[str, float] = {}
+        self._current_idx: int = 0
+        self._lock = asyncio.Lock()
+
+    def initialize(self, keys: list[str]):
+        self._keys = keys
+        self._cooldowns = {k: 0.0 for k in keys}
+
+    async def get_key_info(self) -> tuple[str, float]:
+        """
+        Selects the next available key (round-robin among healthy keys).
+        If all keys are on cooldown, returns the key that recovers earliest
+        along with its recovery timestamp.
+        """
+        async with self._lock:
+            if not self._keys:
+                raise ValueError("No Groq API keys are configured.")
+
+            now = time.time()
+            # Filter for keys that are not currently in cooldown
+            healthy_keys = [k for k in self._keys if self._cooldowns[k] <= now]
+
+            if healthy_keys:
+                # Round-robin distribution
+                key = healthy_keys[self._current_idx % len(healthy_keys)]
+                self._current_idx = (self._current_idx + 1) % len(healthy_keys)
+                return key, 0.0
+
+            # All keys are in cooldown; pick the one recovering earliest
+            earliest_key = min(self._keys, key=lambda k: self._cooldowns[k])
+            return earliest_key, self._cooldowns[earliest_key]
+
+    async def mark_cooldown(self, key: str, duration: float = 45.0):
+        """Mark a key as rate-limited with a cooldown duration."""
+        async with self._lock:
+            if key in self._cooldowns:
+                self._cooldowns[key] = time.time() + duration
+                logger.info(
+                    "groq_key_cooldown_set",
+                    extra={"key_suffix": key[-6:], "duration": duration}
+                )
+
+_key_manager = GroqKeyManager()
+_key_manager_initialized = False
+
+
+def _get_key_manager() -> GroqKeyManager:
+    global _key_manager_initialized
+    if not _key_manager_initialized:
+        keys = settings.groq_api_keys
+        _key_manager.initialize(keys)
+        _key_manager_initialized = True
+    return _key_manager
+
 
 # ── Semaphore setup ───────────────────────────────────────────────────────────
 # Initialised lazily on first use so that settings are loaded first.
@@ -88,22 +157,94 @@ _json_mode_supported: dict[str, bool] = {
 }
 
 
-# ── Retry helper ──────────────────────────────────────────────────────────────
+# ── LLM builders ─────────────────────────────────────────────────────────────
 
-async def _invoke_with_retry(llm: ChatGroq, msgs: list[BaseMessage], model_name: str) -> Any:
-    """
-    Invoke Groq with exponential backoff on 429 (Rate Limit) errors.
+def _build_chatgroq(
+    model: str | None = None,
+    max_tokens: int | None = None,
+    response_format: dict | None = None,
+    api_key: str | None = None,
+) -> ChatGroq:
+    model = model or settings.groq_model
+    max_tokens = max_tokens or 2048
+    api_key = api_key or settings.groq_api_key
+    logger.debug(
+        "groq_request",
+        extra={
+            "model": model,
+            "response_format": response_format,
+            "max_tokens": max_tokens,
+            "temperature": 0.1,
+            "api_key_suffix": api_key[-6:] if api_key else "None",
+        },
+    )
+    kwargs: dict[str, Any] = {
+        "model": model,
+        "temperature": 0.1,
+        "max_tokens": max_tokens,
+        "api_key": api_key,
+        "timeout": settings.groq_timeout,
+        "max_retries": 0,  # We handle retries ourselves in _invoke_with_key_rotation
+    }
+    if response_format is not None:
+        kwargs["model_kwargs"] = {"response_format": response_format}
+    return ChatGroq(**kwargs)
 
-    Retry policy: 3 attempts, backoff = base^attempt + jitter
-      Attempt 1 → wait  2 + jitter
-      Attempt 2 → wait  4 + jitter
-      Attempt 3 → wait  8 + jitter
-    Max total wait ≈ 14 seconds — well inside the 28s expert timeout.
+
+@lru_cache(maxsize=128)
+def get_llm(
+    model: str | None = None, max_tokens: int | None = None, api_key: str | None = None
+) -> ChatGroq:
+    """Return a cached ChatGroq instance without JSON mode."""
+    return _build_chatgroq(model, max_tokens, None, api_key)
+
+
+@lru_cache(maxsize=128)
+def get_llm_json(
+    model: str | None = None, max_tokens: int | None = None, api_key: str | None = None
+) -> ChatGroq:
+    """Return a cached ChatGroq instance with JSON mode."""
+    return _build_chatgroq(model, max_tokens, {"type": "json_object"}, api_key)
+
+
+# ── Rotated Invocation Handler ───────────────────────────────────────────────
+
+async def _invoke_with_key_rotation(
+    msgs: list[BaseMessage],
+    model_name: str,
+    max_tokens: int | None = None,
+    response_format: dict | None = None,
+) -> Any:
     """
-    max_attempts = settings.groq_max_retries + 1  # includes the first try
-    base = settings.groq_backoff_base
+    Invoke Groq using a key from the rotated API key pool.
+    If a 429 rate limit is hit, the key is put in cooldown and we IMMEDIATELY
+    retry the call with the next healthy API key, avoiding unnecessary sleep delays.
+    """
+    key_manager = _get_key_manager()
+    max_attempts = settings.groq_max_retries + 1
 
     for attempt in range(max_attempts):
+        key, recovery_time = await key_manager.get_key_info()
+        now = time.time()
+
+        # If the selected key is in cooldown (which means all keys are), sleep until it's ready.
+        if recovery_time > now:
+            wait_duration = recovery_time - now
+            logger.warning(
+                "all_groq_keys_cooldown",
+                extra={
+                    "wait_time": round(wait_duration, 2),
+                    "attempt": attempt + 1,
+                }
+            )
+            await asyncio.sleep(wait_duration)
+
+        # Build ChatGroq instance with this key
+        if response_format is not None:
+            llm = get_llm_json(model_name, max_tokens, key)
+        else:
+            llm = get_llm(model_name, max_tokens, key)
+
         try:
             return await llm.ainvoke(msgs)
         except Exception as exc:
@@ -112,67 +253,32 @@ async def _invoke_with_retry(llm: ChatGroq, msgs: list[BaseMessage], model_name:
                 phrase in err_str
                 for phrase in ("429", "rate limit", "too many requests", "rate_limit")
             )
-            if is_rate_limit and attempt < max_attempts - 1:
-                wait_time = (base ** (attempt + 1)) + random.uniform(0.3, 1.0)
-                logger.warning(
-                    "groq_rate_limit_hit",
-                    extra={
-                        "model": model_name,
-                        "attempt": attempt + 1,
-                        "wait_time": round(wait_time, 2),
-                        "error": str(exc)[:200],
-                    },
-                )
-                await asyncio.sleep(wait_time)
-            else:
-                raise
-    # Final attempt (should not reach here, but for safety)
-    return await llm.ainvoke(msgs)
+            if is_rate_limit:
+                # Mark the current key as rate-limited
+                await key_manager.mark_cooldown(key, duration=45.0)
 
+                # If we have attempts remaining, loop immediately to try the next key
+                if attempt < max_attempts - 1:
+                    logger.warning(
+                        "groq_rate_limit_rotation",
+                        extra={
+                            "failed_key_suffix": key[-6:],
+                            "attempt": attempt + 1,
+                            "model": model_name,
+                        }
+                    )
+                    # Tiny settling pause before switching keys
+                    await asyncio.sleep(0.1)
+                    continue
+            raise
 
-# ── LLM builders ─────────────────────────────────────────────────────────────
-
-def _build_chatgroq(
-    model: str | None = None,
-    max_tokens: int | None = None,
-    response_format: dict | None = None,
-) -> ChatGroq:
-    model = model or settings.groq_model
-    max_tokens = max_tokens or 2048
-    logger.debug(
-        "groq_request",
-        extra={
-            "model": model,
-            "response_format": response_format,
-            "max_tokens": max_tokens,
-            "temperature": 0.1,
-        },
-    )
-    kwargs: dict[str, Any] = {
-        "model": model,
-        "temperature": 0.1,
-        "max_tokens": max_tokens,
-        "api_key": settings.groq_api_key,
-        "timeout": settings.groq_timeout,
-        "max_retries": 0,  # We handle retries ourselves in _invoke_with_retry
-    }
+    # Fallback to try one last time
+    key, _ = await key_manager.get_key_info()
     if response_format is not None:
-        kwargs["model_kwargs"] = {"response_format": response_format}
-    return ChatGroq(**kwargs)
-
-
-@lru_cache(maxsize=32)
-def get_llm(model: str | None = None, max_tokens: int | None = None) -> ChatGroq:
-    """Return a cached ChatGroq instance without JSON mode."""
-    return _build_chatgroq(model, max_tokens, None)
-
-
-@lru_cache(maxsize=32)
-def get_llm_json(
-    model: str | None = None, max_tokens: int | None = None
-) -> ChatGroq:
-    """Return a cached ChatGroq instance with JSON mode."""
-    return _build_chatgroq(model, max_tokens, {"type": "json_object"})
+        llm = get_llm_json(model_name, max_tokens, key)
+    else:
+        llm = get_llm(model_name, max_tokens, key)
+    return await llm.ainvoke(msgs)
 
 
 # ── Public call_llm ───────────────────────────────────────────────────────────
@@ -232,8 +338,12 @@ async def call_llm(
                     )
                 else:
                     try:
-                        llm = get_llm_json(model, max_tokens)
-                        response = await _invoke_with_retry(llm, messages, model_for_log)
+                        response = await _invoke_with_key_rotation(
+                            messages,
+                            model_for_log,
+                            max_tokens,
+                            {"type": "json_object"}
+                        )
                         logger.info(
                             "groq_call_success",
                             extra={"mode": "json", "model": model_for_log, "lane": lane},
@@ -265,8 +375,12 @@ async def call_llm(
                     elif isinstance(last_msg, SystemMessage):
                         modified_messages = messages[:-1] + [SystemMessage(content=last_msg.content + strict_instruction)]
 
-            llm = get_llm(model, max_tokens)
-            response = await _invoke_with_retry(llm, modified_messages, model_for_log)
+            response = await _invoke_with_key_rotation(
+                modified_messages,
+                model_for_log,
+                max_tokens,
+                None
+            )
 
             # If the text-mode response doesn't parse as JSON, retry once with an
             # explicit repair instruction before giving up and returning raw output.
@@ -284,7 +398,12 @@ async def call_llm(
                             )
                         )
                     ]
-                    response = await _invoke_with_retry(llm, repair_messages, model_for_log)
+                    response = await _invoke_with_key_rotation(
+                        repair_messages,
+                        model_for_log,
+                        max_tokens,
+                        None
+                    )
 
     logger.info(
         "groq_call_success",

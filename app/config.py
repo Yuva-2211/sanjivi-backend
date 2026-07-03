@@ -23,6 +23,7 @@ class Settings(BaseSettings):
 
     # ── LLM ──────────────────────────────────────────────────────────────────
     groq_api_key: str = Field(default="", description="Groq API key")
+    groq_api_keys_str: str = Field(default="", description="Comma-separated list of Groq API keys")
     groq_model: str = Field(
         default="llama-3.3-70b-versatile",
         description="Groq model identifier",
@@ -121,12 +122,22 @@ class Settings(BaseSettings):
         if values.top_k_rerank < values.top_k_final:
             raise ValueError("top_k_rerank must be greater than or equal to top_k_final")
 
-        if not values.groq_api_key:
-            raise ValueError("GROQ_API_KEY must be set for Sanjivi AI to function.")
+        if not values.groq_api_key and not values.groq_api_keys_str:
+            raise ValueError("Either GROQ_API_KEY or GROQ_API_KEYS_STR must be set for Sanjivi AI to function.")
         if not values.pinecone_api_key:
             raise ValueError("PINECONE_API_KEY must be set for Sanjivi AI to function.")
 
         return values
+
+    @property
+    def groq_api_keys(self) -> list[str]:
+        """Return the list of configured Groq API keys, supporting rotation."""
+        keys = []
+        if self.groq_api_keys_str:
+            keys.extend([k.strip() for k in self.groq_api_keys_str.split(",") if k.strip()])
+        if self.groq_api_key and self.groq_api_key not in keys:
+            keys.append(self.groq_api_key)
+        return keys
 
 @lru_cache(maxsize=1)
 def get_settings() -> Settings:
