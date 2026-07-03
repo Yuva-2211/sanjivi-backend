@@ -83,100 +83,23 @@ _json_mode_supported: dict[str, bool] = {
 }
 
 # ── OpenRouter Fallback Chain ─────────────────────────────────────────────────
-# If the primary OpenRouter model hits a 429, retry with this backup model.
-# The backup must be on a different upstream provider to have separate rate-limit headroom.
-OPENROUTER_FALLBACK_MODEL = "meta-llama/llama-3.3-70b-instruct:free"
+# Models are tried in sequence when 429s are encountered.
+# Each maps to a DIFFERENT upstream provider for independent rate-limit headroom.
+# OpenInference → Venice → Avian/Google → Featherless/Mistral
+OPENROUTER_FALLBACK_CHAIN: list[str] = [
+    "openai/gpt-oss-120b:free",               # Primary    (OpenInference)
+    "meta-llama/llama-3.3-70b-instruct:free", # Fallback 1 (Venice)
+    "google/gemma-3-27b-it:free",             # Fallback 2 (Google / Avian)
+    "mistralai/mistral-7b-instruct:free",     # Fallback 3 (Mistral / Featherless)
+]
+
+# Keep the alias for backward-compat with any external imports
+OPENROUTER_FALLBACK_MODEL = OPENROUTER_FALLBACK_CHAIN[1]
 
 
 class RateLimitError(Exception):
     """Raised when all retry attempts are exhausted due to 429 rate limiting."""
     pass
-
-
-# ── OpenRouter Key Pool Manager ───────────────────────────────────────────────
-
-class OpenRouterKeyManager:
-    """
-    Round-robin key pool for OpenRouter API keys.
-
-    When a key hits a 429 it is put on cooldown for `cooldown_secs`.
-    The next call immediately picks the next healthy key.
-    If ALL keys are on cooldown, we wait until the soonest-recovering key is ready.
-
-    Populate via Render env var::
-
-        OPENROUTER_API_KEYS_STR=sk-or-v1-aaa,sk-or-v1-bbb,sk-or-v1-ccc
-
-    If the variable is absent, falls back to the single OPENROUTER_API_KEY.
-    """
-
-    def __init__(self) -> None:
-        self._keys: list[str] = []
-        self._cooldowns: dict[str, float] = {}  # key → unix timestamp when cooldown ends
-        self._index: int = 0
-        self._lock: asyncio.Lock = asyncio.Lock()
-        self._initialised: bool = False
-
-    def _load(self) -> None:
-        keys: list[str] = []
-        if settings.openrouter_api_keys_str:
-            keys = [k.strip() for k in settings.openrouter_api_keys_str.split(",") if k.strip()]
-        if settings.openrouter_api_key and settings.openrouter_api_key not in keys:
-            keys.insert(0, settings.openrouter_api_key)
-        self._keys = keys or [""]
-        self._initialised = True
-        logger.info(
-            "openrouter_key_pool_loaded",
-            extra={"key_count": len(self._keys)},
-        )
-
-    async def get_key(self) -> str:
-        """Return the next healthy key, waiting if all are in cooldown."""
-        async with self._lock:
-            if not self._initialised:
-                self._load()
-
-            import time
-            now = time.monotonic()
-
-            # Scan from current index for a healthy key
-            for _ in range(len(self._keys)):
-                key = self._keys[self._index % len(self._keys)]
-                self._index = (self._index + 1) % len(self._keys)
-                if self._cooldowns.get(key, 0) <= now:
-                    return key
-
-            # All in cooldown — find the soonest recovery and wait
-            soonest_key = min(self._keys, key=lambda k: self._cooldowns.get(k, 0))
-            wait = max(0.0, self._cooldowns[soonest_key] - now)
-            logger.warning(
-                "openrouter_all_keys_cooldown",
-                extra={"wait_secs": round(wait, 1), "key_count": len(self._keys)},
-            )
-        # Release lock while sleeping so other coroutines don't block
-        await asyncio.sleep(wait)
-        async with self._lock:
-            return soonest_key
-
-    async def mark_cooldown(self, key: str, duration: float = 60.0) -> None:
-        """Put a key on cooldown after a 429 response."""
-        import time
-        async with self._lock:
-            self._cooldowns[key] = time.monotonic() + duration
-            logger.warning(
-                "openrouter_key_cooldown",
-                extra={"key_suffix": key[-8:], "cooldown_secs": duration},
-            )
-
-
-_openrouter_key_manager: OpenRouterKeyManager | None = None
-
-
-def _get_openrouter_key_manager() -> OpenRouterKeyManager:
-    global _openrouter_key_manager
-    if _openrouter_key_manager is None:
-        _openrouter_key_manager = OpenRouterKeyManager()
-    return _openrouter_key_manager
 
 
 # ── Provider routing helper ───────────────────────────────────────────────────
@@ -234,10 +157,8 @@ def _build_chatopenrouter(
     model: str,
     max_tokens: int | None = None,
     response_format: dict | None = None,
-    api_key: str | None = None,
 ) -> ChatOpenAI:
     max_tokens = max_tokens or 2048
-    key = api_key or settings.openrouter_api_key
     logger.debug(
         "openrouter_request",
         extra={
@@ -245,14 +166,13 @@ def _build_chatopenrouter(
             "response_format": response_format,
             "max_tokens": max_tokens,
             "temperature": 0.1,
-            "key_suffix": key[-8:] if key else "none",
         },
     )
     kwargs: dict[str, Any] = {
         "model": model,
         "temperature": 0.1,
         "max_tokens": max_tokens,
-        "openai_api_key": key,
+        "openai_api_key": settings.openrouter_api_key,
         "openai_api_base": "https://openrouter.ai/api/v1",
         "timeout": settings.groq_timeout,
         "max_retries": 0,  # We handle retries ourselves in _invoke_with_retry
@@ -324,13 +244,28 @@ async def _invoke_with_retry(llm: Any, msgs: list[BaseMessage], model_name: str)
             if is_rate_limit:
                 last_exc = exc
                 if attempt < max_attempts - 1:
-                    wait_time = (base ** (attempt + 1)) + random.uniform(0.3, 1.0)
+                    # Honor the Retry-After header if the provider sends one
+                    retry_after: float | None = None
+                    try:
+                        import re as _re
+                        m = _re.search(r"retry_after_seconds[^:]*:\s*([\d.]+)", str(exc))
+                        if m:
+                            retry_after = float(m.group(1))
+                    except Exception:
+                        pass
+
+                    if retry_after is not None:
+                        wait_time = retry_after + random.uniform(0.5, 2.0)
+                    else:
+                        wait_time = (base ** (attempt + 1)) + random.uniform(0.3, 1.0)
+
                     logger.warning(
                         "llm_rate_limit_hit",
                         extra={
                             "model": model_name,
                             "attempt": attempt + 1,
                             "wait_time": round(wait_time, 2),
+                            "retry_after_header": retry_after,
                             "error": str(exc)[:200],
                         },
                     )
@@ -351,48 +286,40 @@ async def _invoke_openrouter_with_fallback(
     use_json: bool,
 ) -> Any:
     """
-    Try the primary OpenRouter model with key rotation, then automatically fall
-    back to the backup model if the primary hits a sustained 429 rate limit.
-
-    Key rotation strategy:
-      - Each call pulls the next healthy key from the pool.
-      - On 429: key is put on 60s cooldown, RateLimitError is raised.
-      - Caller (this function) then tries the next key OR switches to fallback model.
+    Try each model in the OpenRouter fallback chain in order.
+    If a model returns a 429 RateLimitError, the next model in the chain is tried.
+    Raises RateLimitError only if every model in the chain is exhausted.
     """
-    km = _get_openrouter_key_manager()
-    fallback = OPENROUTER_FALLBACK_MODEL
-    models_to_try = [primary_model]
-    if fallback != primary_model:
-        models_to_try.append(fallback)
+    # Build the chain starting from the primary model, then any remaining fallbacks
+    chain = [primary_model] + [
+        m for m in OPENROUTER_FALLBACK_CHAIN if m != primary_model
+    ]
 
-    for model_name in models_to_try:
-        # Each model gets its own key-rotation attempt loop
-        max_key_attempts = min(len(km._keys) if km._initialised else 1, 3)
-        for key_attempt in range(max_key_attempts):
-            key = await km.get_key()
-            llm = _build_chatopenrouter(model_name, max_tokens, None, api_key=key)
-            try:
-                result = await _invoke_with_retry(llm, msgs, model_name)
-                return result
-            except RateLimitError:
-                await km.mark_cooldown(key, duration=60.0)
-                if key_attempt < max_key_attempts - 1:
-                    logger.warning(
-                        "openrouter_key_rotating",
-                        extra={"model": model_name, "key_attempt": key_attempt + 1, "key_suffix": key[-8:]},
-                    )
-                    continue
-                # Exhausted keys for this model — try fallback
-                if model_name == primary_model and fallback != primary_model:
-                    logger.warning(
-                        "openrouter_primary_ratelimited_using_fallback",
-                        extra={"primary": primary_model, "fallback": fallback},
-                    )
-                break
-            except Exception:
-                raise
-
-    raise RateLimitError(f"All keys exhausted for both primary ({primary_model}) and fallback ({fallback}).")
+    for idx, model_name in enumerate(chain):
+        try:
+            if use_json and _json_mode_supported.get(model_name, True):
+                llm = get_openrouter_llm_json(model_name, max_tokens)
+            else:
+                llm = get_openrouter_llm(model_name, max_tokens)
+            result = await _invoke_with_retry(llm, msgs, model_name)
+            if idx > 0:
+                logger.info(
+                    "openrouter_fallback_success",
+                    extra={"model_used": model_name, "position_in_chain": idx},
+                )
+            return result
+        except RateLimitError:
+            remaining = chain[idx + 1:]
+            if remaining:
+                logger.warning(
+                    "openrouter_model_ratelimited_trying_next",
+                    extra={"failed": model_name, "next": remaining[0], "remaining": len(remaining)},
+                )
+                continue
+            # All models exhausted
+            raise RateLimitError(
+                f"All {len(chain)} OpenRouter fallback models are rate-limited: {chain}"
+            )
 
 
 # ── Public call_llm ───────────────────────────────────────────────────────────

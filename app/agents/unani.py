@@ -11,10 +11,10 @@ import json
 from typing import Optional
 
 from langchain_core.messages import HumanMessage, SystemMessage
-from tenacity import retry, stop_after_attempt, wait_exponential
+from tenacity import retry, retry_if_not_exception_type, stop_after_attempt, wait_exponential
 
 from app.config import settings
-from app.models.llm import call_llm
+from app.models.llm import call_llm, RateLimitError
 from app.prompts.unani_prompt import UNANI_SYSTEM, UNANI_USER
 from app.rag.retriever import get_hybrid_retriever, build_context_string
 from app.schemas.chat import ExpertResponse
@@ -43,7 +43,12 @@ def _build_expert_response(parsed: dict, raw_response: str) -> ExpertResponse:
     )
 
 
-@retry(stop=stop_after_attempt(1), wait=wait_exponential(multiplier=1, min=2, max=10))
+@retry(
+    stop=stop_after_attempt(1),
+    wait=wait_exponential(multiplier=1, min=2, max=10),
+    retry=retry_if_not_exception_type(RateLimitError),
+    reraise=True,
+)
 async def run_unani_expert(
     query: str,
     chunks: list[RetrievedChunk] | None = None,

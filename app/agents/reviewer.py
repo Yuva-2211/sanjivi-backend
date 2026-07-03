@@ -11,10 +11,10 @@ from __future__ import annotations
 import json
 
 from langchain_core.messages import HumanMessage, SystemMessage
-from tenacity import retry, stop_after_attempt, wait_exponential
+from tenacity import retry, retry_if_not_exception_type, stop_after_attempt, wait_exponential
 
 from app.config import settings
-from app.models.llm import call_llm
+from app.models.llm import call_llm, RateLimitError
 from app.prompts.reviewer_prompt import REVIEWER_SYSTEM, REVIEWER_USER
 from app.schemas.chat import (
     ConsensusResponse,
@@ -43,7 +43,12 @@ def _brief(resp: ExpertResponse | YogaResponse | None, domain: str) -> str:
     return f"{domain}: " + " ".join(parts) if parts else f"{domain}: no response."
 
 
-@retry(stop=stop_after_attempt(2), wait=wait_exponential(multiplier=1, min=2, max=10))
+@retry(
+    stop=stop_after_attempt(2),
+    wait=wait_exponential(multiplier=1, min=2, max=10),
+    retry=retry_if_not_exception_type(RateLimitError),
+    reraise=True,
+)
 async def run_reviewer_agent(
     query: str,
     consensus: ConsensusResponse | None,
