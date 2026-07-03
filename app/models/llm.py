@@ -75,11 +75,22 @@ def _get_semaphores() -> tuple[
 _JSON_MODE_UNSUPPORTED: set[str] = {
     "openai/gpt-oss-120b",
     "openai/gpt-oss-120b:free",
+    "meta-llama/llama-3.3-70b-instruct:free",
 }
 
 _json_mode_supported: dict[str, bool] = {
     m: False for m in _JSON_MODE_UNSUPPORTED
 }
+
+# ── OpenRouter Fallback Chain ─────────────────────────────────────────────────
+# If the primary OpenRouter model hits a 429, retry with this backup model.
+# The backup must be on a different upstream provider to have separate rate-limit headroom.
+OPENROUTER_FALLBACK_MODEL = "meta-llama/llama-3.3-70b-instruct:free"
+
+
+class RateLimitError(Exception):
+    """Raised when all retry attempts are exhausted due to 429 rate limiting."""
+    pass
 
 
 # ── Provider routing helper ───────────────────────────────────────────────────
@@ -205,9 +216,12 @@ def get_llm_json(model: str | None = None, max_tokens: int | None = None) -> Cha
 async def _invoke_with_retry(llm: Any, msgs: list[BaseMessage], model_name: str) -> Any:
     """
     Invoke Groq or OpenRouter via LangChain with custom exponential backoff on 429 rate limits.
+    Raises RateLimitError if all retries are exhausted due to rate limits.
+    Raises the original exception for all other errors.
     """
     max_attempts = settings.groq_max_retries + 1  # includes the first try
     base = settings.groq_backoff_base
+    last_exc: Exception | None = None
 
     for attempt in range(max_attempts):
         try:
@@ -218,22 +232,61 @@ async def _invoke_with_retry(llm: Any, msgs: list[BaseMessage], model_name: str)
                 phrase in err_str
                 for phrase in ("429", "rate limit", "too many requests", "rate_limit")
             )
-            if is_rate_limit and attempt < max_attempts - 1:
-                wait_time = (base ** (attempt + 1)) + random.uniform(0.3, 1.0)
-                logger.warning(
-                    "llm_rate_limit_hit",
-                    extra={
-                        "model": model_name,
-                        "attempt": attempt + 1,
-                        "wait_time": round(wait_time, 2),
-                        "error": str(exc)[:200],
-                    },
-                )
-                await asyncio.sleep(wait_time)
+            if is_rate_limit:
+                last_exc = exc
+                if attempt < max_attempts - 1:
+                    wait_time = (base ** (attempt + 1)) + random.uniform(0.3, 1.0)
+                    logger.warning(
+                        "llm_rate_limit_hit",
+                        extra={
+                            "model": model_name,
+                            "attempt": attempt + 1,
+                            "wait_time": round(wait_time, 2),
+                            "error": str(exc)[:200],
+                        },
+                    )
+                    await asyncio.sleep(wait_time)
+                    continue
+                # All attempts exhausted — raise sentinel so caller can try fallback
+                raise RateLimitError(f"All {max_attempts} attempts rate-limited for {model_name}: {exc}") from exc
             else:
                 raise
-    # Final attempt (fallback/safety)
-    return await llm.ainvoke(msgs)
+
+    raise RateLimitError(f"All {max_attempts} attempts rate-limited for {model_name}")
+
+
+async def _invoke_openrouter_with_fallback(
+    msgs: list[BaseMessage],
+    primary_model: str,
+    max_tokens: int | None,
+    use_json: bool,
+) -> Any:
+    """
+    Try the primary OpenRouter model, then automatically fall back to the
+    backup model if the primary hits a 429 rate limit.
+    """
+    fallback = OPENROUTER_FALLBACK_MODEL
+    for model_name in (primary_model, fallback):
+        # Skip if primary == fallback (same model configured)
+        if model_name == fallback and model_name == primary_model:
+            break
+        try:
+            if use_json and _json_mode_supported.get(model_name, True):
+                llm = get_openrouter_llm_json(model_name, max_tokens)
+            else:
+                llm = get_openrouter_llm(model_name, max_tokens)
+            return await _invoke_with_retry(llm, msgs, model_name)
+        except RateLimitError:
+            if model_name == primary_model and fallback != primary_model:
+                logger.warning(
+                    "openrouter_primary_ratelimited_using_fallback",
+                    extra={"primary": primary_model, "fallback": fallback},
+                )
+                continue
+            raise
+
+    # Should never reach here, but raise clearly if we do
+    raise RateLimitError(f"Both primary ({primary_model}) and fallback ({fallback}) are rate-limited.")
 
 
 # ── Public call_llm ───────────────────────────────────────────────────────────
@@ -334,11 +387,13 @@ async def call_llm(
                         modified_messages = messages[:-1] + [SystemMessage(content=last_msg.content + strict_instruction)]
 
             if provider == "openrouter":
-                llm = get_openrouter_llm(model_for_log, max_tokens)
+                # Use fallback chain: primary model → backup model on 429
+                response = await _invoke_openrouter_with_fallback(
+                    modified_messages, model_for_log, max_tokens, use_json=False
+                )
             else:
                 llm = get_groq_llm(model_for_log, max_tokens)
-
-            response = await _invoke_with_retry(llm, modified_messages, model_for_log)
+                response = await _invoke_with_retry(llm, modified_messages, model_for_log)
 
             # If the text-mode response doesn't parse as JSON, retry once with an
             # explicit repair instruction before giving up and returning raw output.
@@ -356,10 +411,17 @@ async def call_llm(
                             )
                         )
                     ]
-                    response = await _invoke_with_retry(llm, repair_messages, model_for_log)
+                    if provider == "openrouter":
+                        response = await _invoke_openrouter_with_fallback(
+                            repair_messages, model_for_log, max_tokens, use_json=False
+                        )
+                    else:
+                        llm = get_groq_llm(model_for_log, max_tokens)
+                        response = await _invoke_with_retry(llm, repair_messages, model_for_log)
 
     logger.info(
         "llm_call_success",
         extra={"mode": "text", "model": model_for_log, "provider": provider, "lane": lane},
     )
     return response
+
