@@ -82,19 +82,8 @@ _json_mode_supported: dict[str, bool] = {
     m: False for m in _JSON_MODE_UNSUPPORTED
 }
 
-# ── OpenRouter Fallback Chain ─────────────────────────────────────────────────
-# Models are tried in sequence when 429s are encountered.
-# Each maps to a DIFFERENT upstream provider for independent rate-limit headroom.
-# OpenInference → Venice → Avian/Google → Featherless/Mistral
-OPENROUTER_FALLBACK_CHAIN: list[str] = [
-    "openai/gpt-oss-120b:free",               # Primary    (OpenInference)
-    "meta-llama/llama-3.3-70b-instruct:free", # Fallback 1 (Venice)
-    "google/gemma-3-27b-it:free",             # Fallback 2 (Google / Avian)
-    "mistralai/mistral-7b-instruct:free",     # Fallback 3 (Mistral / Featherless)
-]
-
-# Keep the alias for backward-compat with any external imports
-OPENROUTER_FALLBACK_MODEL = OPENROUTER_FALLBACK_CHAIN[1]
+# Keep the alias for backward-compat with any external imports if needed
+OPENROUTER_FALLBACK_MODEL = "meta-llama/llama-3.3-70b-instruct"
 
 
 class RateLimitError(Exception):
@@ -228,7 +217,12 @@ async def _invoke_with_retry(llm: Any, msgs: list[BaseMessage], model_name: str)
     Raises RateLimitError if all retries are exhausted due to rate limits.
     Raises the original exception for all other errors.
     """
-    max_attempts = settings.groq_max_retries + 1  # includes the first try
+    provider = _get_provider_for_model(model_name)
+    if provider == "openrouter":
+        max_attempts = 1
+    else:
+        max_attempts = settings.groq_max_retries + 1
+
     base = settings.groq_backoff_base
     last_exc: Exception | None = None
 
@@ -279,49 +273,6 @@ async def _invoke_with_retry(llm: Any, msgs: list[BaseMessage], model_name: str)
     raise RateLimitError(f"All {max_attempts} attempts rate-limited for {model_name}")
 
 
-async def _invoke_openrouter_with_fallback(
-    msgs: list[BaseMessage],
-    primary_model: str,
-    max_tokens: int | None,
-    use_json: bool,
-) -> Any:
-    """
-    Try each model in the OpenRouter fallback chain in order.
-    If a model returns a 429 RateLimitError, the next model in the chain is tried.
-    Raises RateLimitError only if every model in the chain is exhausted.
-    """
-    # Build the chain starting from the primary model, then any remaining fallbacks
-    chain = [primary_model] + [
-        m for m in OPENROUTER_FALLBACK_CHAIN if m != primary_model
-    ]
-
-    for idx, model_name in enumerate(chain):
-        try:
-            if use_json and _json_mode_supported.get(model_name, True):
-                llm = get_openrouter_llm_json(model_name, max_tokens)
-            else:
-                llm = get_openrouter_llm(model_name, max_tokens)
-            result = await _invoke_with_retry(llm, msgs, model_name)
-            if idx > 0:
-                logger.info(
-                    "openrouter_fallback_success",
-                    extra={"model_used": model_name, "position_in_chain": idx},
-                )
-            return result
-        except RateLimitError:
-            remaining = chain[idx + 1:]
-            if remaining:
-                logger.warning(
-                    "openrouter_model_ratelimited_trying_next",
-                    extra={"failed": model_name, "next": remaining[0], "remaining": len(remaining)},
-                )
-                continue
-            # All models exhausted
-            raise RateLimitError(
-                f"All {len(chain)} OpenRouter fallback models are rate-limited: {chain}"
-            )
-
-
 # ── Public call_llm ───────────────────────────────────────────────────────────
 
 # Lane identifiers — passed by each agent type
@@ -337,13 +288,7 @@ async def call_llm(
 ) -> Any:
     """
     Invoke Groq or OpenRouter with JSON mode first, falling back to plain text on failure.
-
-    Parameters
-    ----------
-    lane : "expert" | "emergency" | "consensus" | "reviewer"
-        Controls which category semaphore is acquired in addition to the
-        global semaphore, preventing lower-priority calls from blocking
-        high-priority emergency screening.
+    If a rate limit is hit, log 'Expert unavailable' and return None immediately.
     """
     model_for_log = model or settings.groq_model
     max_tokens_for_log = max_tokens or 2048
@@ -371,90 +316,94 @@ async def call_llm(
     lane_sem = lane_sem_map.get(lane, expert_sem)
 
     # Acquire both semaphores — global first (outer), then lane-specific (inner).
-    # This preserves lane isolation while enforcing the total concurrent request cap.
     async with global_sem:
         async with lane_sem:
-            if force_json:
-                if not _json_mode_supported.get(model_for_log, True):
-                    logger.info(
-                        "llm_json_mode_skip",
-                        extra={"model": model_for_log, "reason": "previous json mode failure"},
-                    )
-                else:
-                    try:
-                        if provider == "openrouter":
-                            llm = get_openrouter_llm_json(model_for_log, max_tokens)
-                        else:
-                            llm = get_groq_llm_json(model_for_log, max_tokens)
-
-                        response = await _invoke_with_retry(llm, messages, model_for_log)
+            try:
+                if force_json:
+                    if not _json_mode_supported.get(model_for_log, True):
                         logger.info(
-                            "llm_call_success",
-                            extra={"mode": "json", "model": model_for_log, "provider": provider, "lane": lane},
-                        )
-                        return response
-                    except Exception as exc:
-                        reason = str(exc).lower()
-                        if any(
-                            keyword in reason
-                            for keyword in ("response_format", "json", "validate", "bad request", "unsupported", "invalid")
-                        ):
-                            _json_mode_supported[model_for_log] = False
-                        logger.info(
-                            "llm_json_mode_disabled",
-                            extra={"model": model_for_log, "error": str(exc)[:300]},
-                        )
-
-            modified_messages = messages
-            if force_json and not _json_mode_supported.get(model_for_log, True):
-                strict_instruction = (
-                    "\n\nIMPORTANT: You MUST respond with ONLY a single valid JSON object. "
-                    "Do not include any markdown formatting or code fences (e.g. ```json or ```), "
-                    "no conversational prose, and no introductory/concluding text. Output raw JSON only."
-                )
-                if messages:
-                    last_msg = messages[-1]
-                    if isinstance(last_msg, HumanMessage):
-                        modified_messages = messages[:-1] + [HumanMessage(content=last_msg.content + strict_instruction)]
-                    elif isinstance(last_msg, SystemMessage):
-                        modified_messages = messages[:-1] + [SystemMessage(content=last_msg.content + strict_instruction)]
-
-            if provider == "openrouter":
-                # Use fallback chain: primary model → backup model on 429
-                response = await _invoke_openrouter_with_fallback(
-                    modified_messages, model_for_log, max_tokens, use_json=False
-                )
-            else:
-                llm = get_groq_llm(model_for_log, max_tokens)
-                response = await _invoke_with_retry(llm, modified_messages, model_for_log)
-
-            # If the text-mode response doesn't parse as JSON, retry once with an
-            # explicit repair instruction before giving up and returning raw output.
-            if force_json:
-                parsed = parse_json_response(response.content)
-                if not parsed:
-                    logger.info("llm_json_repair_retry", extra={"model": model_for_log})
-                    repair_messages = messages + [
-                        AIMessage(content=response.content),
-                        HumanMessage(
-                            content=(
-                                "Your previous response was not valid JSON. "
-                                "Respond again with ONLY a single valid JSON object, "
-                                "no prose, no markdown fences, no text before or after it."
-                            )
-                        )
-                    ]
-                    if provider == "openrouter":
-                        response = await _invoke_openrouter_with_fallback(
-                            repair_messages, model_for_log, max_tokens, use_json=False
+                            "llm_json_mode_skip",
+                            extra={"model": model_for_log, "reason": "previous json mode failure"},
                         )
                     else:
-                        llm = get_groq_llm(model_for_log, max_tokens)
-                        response = await _invoke_with_retry(llm, repair_messages, model_for_log)
+                        try:
+                            if provider == "openrouter":
+                                llm = get_openrouter_llm_json(model_for_log, max_tokens)
+                            else:
+                                llm = get_groq_llm_json(model_for_log, max_tokens)
 
-    logger.info(
-        "llm_call_success",
-        extra={"mode": "text", "model": model_for_log, "provider": provider, "lane": lane},
-    )
-    return response
+                            response = await _invoke_with_retry(llm, messages, model_for_log)
+                            logger.info(
+                                "llm_call_success",
+                                extra={"mode": "json", "model": model_for_log, "provider": provider, "lane": lane},
+                            )
+                            return response
+                        except RateLimitError:
+                            logger.warning("Expert unavailable", extra={"model": model_for_log})
+                            return None
+                        except Exception as exc:
+                            reason = str(exc).lower()
+                            if any(
+                                keyword in reason
+                                for keyword in ("response_format", "json", "validate", "bad request", "unsupported", "invalid")
+                            ):
+                                _json_mode_supported[model_for_log] = False
+                            logger.info(
+                                "llm_json_mode_disabled",
+                                extra={"model": model_for_log, "error": str(exc)[:300]},
+                            )
+
+                modified_messages = messages
+                if force_json and not _json_mode_supported.get(model_for_log, True):
+                    strict_instruction = (
+                        "\n\nIMPORTANT: You MUST respond with ONLY a single valid JSON object. "
+                        "Do not include any markdown formatting or code fences (e.g. ```json or ```), "
+                        "no conversational prose, and no introductory/concluding text. Output raw JSON only."
+                    )
+                    if messages:
+                        last_msg = messages[-1]
+                        if isinstance(last_msg, HumanMessage):
+                            modified_messages = messages[:-1] + [HumanMessage(content=last_msg.content + strict_instruction)]
+                        elif isinstance(last_msg, SystemMessage):
+                            modified_messages = messages[:-1] + [SystemMessage(content=last_msg.content + strict_instruction)]
+
+                if provider == "openrouter":
+                    llm = get_openrouter_llm(model_for_log, max_tokens)
+                else:
+                    llm = get_groq_llm(model_for_log, max_tokens)
+
+                response = await _invoke_with_retry(llm, modified_messages, model_for_log)
+
+                # If the text-mode response doesn't parse as JSON, retry once with an
+                # explicit repair instruction before giving up and returning raw output.
+                if force_json:
+                    parsed = parse_json_response(response.content)
+                    if not parsed:
+                        logger.info("llm_json_repair_retry", extra={"model": model_for_log})
+                        repair_messages = messages + [
+                            AIMessage(content=response.content),
+                            HumanMessage(
+                                content=(
+                                    "Your previous response was not valid JSON. "
+                                    "Respond again with ONLY a single valid JSON object, "
+                                    "no prose, no markdown fences, no text before or after it."
+                                )
+                            )
+                        ]
+                        if provider == "openrouter":
+                            # No fallback chain helper, just direct cached model call
+                            llm = get_openrouter_llm(model_for_log, max_tokens)
+                            response = await _invoke_with_retry(llm, repair_messages, model_for_log)
+                        else:
+                            llm = get_groq_llm(model_for_log, max_tokens)
+                            response = await _invoke_with_retry(llm, repair_messages, model_for_log)
+
+                logger.info(
+                    "llm_call_success",
+                    extra={"mode": "text", "model": model_for_log, "provider": provider, "lane": lane},
+                )
+                return response
+            except RateLimitError:
+                logger.warning("Expert unavailable", extra={"model": model_for_log})
+                return None
 

@@ -58,14 +58,14 @@ class Settings(BaseSettings):
 
     # ── Per-agent LLM routing ───────────────────────────────────────────────────
     # emergency + reviewer stay on fast 8b model for low latency (Groq)
-    # Clinical agents + consensus use openai/gpt-oss-120b:free via OpenRouter for reasoning
+    # Clinical agents + consensus use meta-llama/llama-3.3-70b-instruct via OpenRouter for reasoning
     emergency_model: str = Field(default="llama-3.1-8b-instant")
-    ayurveda_model: str = Field(default="openai/gpt-oss-120b:free")
-    siddha_model: str = Field(default="openai/gpt-oss-120b:free")
-    unani_model: str = Field(default="openai/gpt-oss-120b:free")
-    homeopathy_model: str = Field(default="openai/gpt-oss-120b:free")
-    yoga_model: str = Field(default="openai/gpt-oss-120b:free")
-    consensus_model: str = Field(default="openai/gpt-oss-120b:free")
+    ayurveda_model: str = Field(default="meta-llama/llama-3.3-70b-instruct")
+    siddha_model: str = Field(default="meta-llama/llama-3.3-70b-instruct")
+    unani_model: str = Field(default="meta-llama/llama-3.3-70b-instruct")
+    homeopathy_model: str = Field(default="meta-llama/llama-3.3-70b-instruct")
+    yoga_model: str = Field(default="meta-llama/llama-3.3-70b-instruct")
+    consensus_model: str = Field(default="meta-llama/llama-3.3-70b-instruct")
     reviewer_model: str = Field(default="llama-3.1-8b-instant")
 
     

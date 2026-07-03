@@ -138,7 +138,7 @@ async def emergency_check_node(state: SanjiviState) -> dict:
 
 
 async def run_experts_node(state: SanjiviState) -> dict:
-    """Run the routed AYUSH expert domains with parallel retrieval and generation."""
+    """Run the routed AYUSH expert domains sequentially to minimize OpenRouter 429s."""
     log.info("node_run_experts", query=state["query"][:80], selected_system=state["selected_system"])
 
     query = state["query"].strip()
@@ -157,12 +157,13 @@ async def run_experts_node(state: SanjiviState) -> dict:
         # Multisystem = explicit request to hear from ALL five experts, no routing.
         candidate_domains = list(expert_map.keys())
         log.info("routing_mode_multisystem_all_experts")
-    elif selected_system in ("Auto", "Multisystem"):
-        # Auto = let the router decide which experts are relevant.
+    elif selected_system == "Auto":
+        # Auto = let the router decide which experts are relevant, limited to maximum 3.
         candidate_domains = classify_query_domains(query)
-        # If classifier returns Multisystem sentinel, expand to all experts
         if candidate_domains == ["Multisystem"]:
-            candidate_domains = list(expert_map.keys())
+            candidate_domains = ["Ayurveda", "Yoga", "Siddha"]
+        else:
+            candidate_domains = candidate_domains[:3]
         log.info("routing_mode_auto", candidate_domains=candidate_domains)
     elif selected_system in expert_map:
         # Single-system = user explicitly chose one AYUSH system.
@@ -171,6 +172,7 @@ async def run_experts_node(state: SanjiviState) -> dict:
     else:
         # Unknown value → treat as Auto for safety.
         candidate_domains = classify_query_domains(query)
+        candidate_domains = candidate_domains[:3]
         log.info("routing_mode_fallback_auto", candidate_domains=candidate_domains)
 
     log.info("routing_decision", selected_system=selected_system, candidate_domains=candidate_domains)
@@ -200,44 +202,36 @@ async def run_experts_node(state: SanjiviState) -> dict:
             else:
                 chunk_map[label] = result
 
-    # ── Expert generation with staggered launch ──────────────────────────────
-    # Stagger expert calls by 300ms to avoid a burst of simultaneous requests
-    # to the same OpenRouter upstream, which is the primary cause of self-inflicted 429s.
+    # ── Expert generation sequentially ─────────────────────────────────────────
+    # Run selected expert domains sequentially (not parallel) to avoid OpenRouter 429 rate limits.
+    # If an expert fails or times out, proceed to the next immediately.
     expert_results: dict[str, Any] = {}
     all_chunks: list[RetrievedChunk] = []
     expert_failure_reasons: dict[str, str] = {}  # for diagnostics
 
-    async def _run_expert(lbl: str, fn: Any, chks: list[RetrievedChunk], delay: float = 0.0) -> tuple[str, Any]:
-        if delay > 0:
-            await asyncio.sleep(delay)
+    for label, (expert_fn, _) in selected_experts.items():
+        log.info("running_expert_sequentially", domain=label)
+        chunks = chunk_map.get(label, [])
         try:
-            res = await asyncio.wait_for(fn(query, chunks=chks, history=history), timeout=55.0)
-            return lbl, res
+            # Each expert has a 15-second timeout
+            res = await asyncio.wait_for(
+                expert_fn(query, chunks=chunks, history=history),
+                timeout=15.0
+            )
+            if res is None:
+                expert_results[label] = None
+            else:
+                resp_obj, used_chunks = res
+                expert_results[label] = (resp_obj, used_chunks)
+                all_chunks.extend(used_chunks)
         except asyncio.TimeoutError:
-            log.error("expert_timeout", domain=lbl)
-            expert_failure_reasons[lbl] = "timeout"
-            return lbl, TimeoutError(f"{lbl} expert timed out after 55 seconds")
+            log.error("expert_timeout", domain=label)
+            expert_failure_reasons[label] = "timeout"
+            expert_results[label] = None
         except Exception as exc:
-            expert_failure_reasons[lbl] = type(exc).__name__
-            return lbl, exc
-
-    expert_tasks = [
-        _run_expert(label, expert_fn, chunk_map.get(label, []), delay=i * 0.3)
-        for i, (label, (expert_fn, _)) in enumerate(selected_experts.items())
-    ]
-
-    expert_gathered = await asyncio.gather(*expert_tasks)
-
-    for label, res in expert_gathered:
-        if isinstance(res, Exception):
-            errors.append(f"{label} expert failed: {res}")
+            log.error("expert_error", domain=label, error=str(exc))
+            expert_failure_reasons[label] = type(exc).__name__
             expert_results[label] = None
-        elif res is None:
-            expert_results[label] = None
-        else:
-            resp_obj, used_chunks = res
-            expert_results[label] = (resp_obj, used_chunks)
-            all_chunks.extend(used_chunks)
 
     def _safe_response(
         res: Any,
@@ -300,9 +294,8 @@ async def yoga_image_search_node(state: SanjiviState) -> dict:
 async def consensus_node(state: SanjiviState) -> dict:
     """Synthesise all expert responses into a consensus.
 
-    Circuit breaker: if the majority of expected experts failed, skip the
-    consensus LLM call (which would also likely fail) and return a partial
-    answer notice instead.
+    If no experts succeeded, return a fallback answer notice directly.
+    Otherwise, run consensus on whichever expert responses are available (1 to 5).
     """
     log.info("node_consensus")
 
@@ -314,23 +307,16 @@ async def consensus_node(state: SanjiviState) -> dict:
         state.get("yoga_response"),
     ]
     successful = [d for d in expert_dicts if d is not None]
-    failed_count = len(expert_dicts) - len(successful)
 
-    # Circuit breaker: if 2+ experts failed and we have ≤1 successful, skip consensus
-    if failed_count >= 2 and len(successful) <= 1:
-        log.warning(
-            "consensus_circuit_breaker_tripped",
-            failed=failed_count,
-            successful=len(successful),
-        )
+    if not successful:
+        log.warning("consensus_no_experts_succeeded")
         from app.schemas.chat import ConsensusResponse
         return {
             "consensus_response": ConsensusResponse(
-                combined_diagnosis="Several expert systems were temporarily unavailable due to provider rate limits. The partial response above is based on the systems that did respond. Please retry in a moment for a complete multi-system analysis.",
-                integrated_treatment="Please retry your query in a moment to receive integrated treatment recommendations.",
-                unified_diet_plan="",
-                unified_lifestyle_advice="",
-                confidence=0.1,
+                unified_recommendation="All AYUSH expert systems were temporarily unavailable due to rate limits or timeout. Please review your query or try again shortly.",
+                common_themes=["System Temporary Offline"],
+                conflicts_detected=[],
+                ranked_advice=[],
             ).model_dump()
         }
 

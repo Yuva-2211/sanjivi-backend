@@ -91,6 +91,13 @@ async def run_consensus_agent(
             max_tokens=settings.consensus_max_tokens,
             lane="consensus",
         )
+        if response is None:
+            return ConsensusResponse(
+                unified_recommendation="The consensus synthesis engine was temporarily unavailable due to rate limits. Please refer to the specific expert advice below.",
+                common_themes=["Rate Limit Recovery"],
+                conflicts_detected=[],
+                ranked_advice=[],
+            )
         parsed = parse_json_response(response.content)
 
         result = ConsensusResponse(

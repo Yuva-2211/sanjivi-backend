@@ -101,6 +101,8 @@ async def run_ayurveda_expert(
             max_tokens=settings.ayurveda_max_tokens,
             lane="expert",
         )
+        if response is None:
+            return None, chunks
         parsed = _parse_expert_response(response.content)
         expert_resp = _build_expert_response(parsed, response.content)
         log.info("ayurveda_expert_done", confidence=expert_resp.confidence)

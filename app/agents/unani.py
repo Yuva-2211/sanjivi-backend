@@ -91,6 +91,8 @@ async def run_unani_expert(
             max_tokens=settings.unani_max_tokens,
             lane="expert",
         )
+        if response is None:
+            return None, chunks
         parsed = _parse_expert_response(response.content)
         expert_resp = _build_expert_response(parsed, response.content)
         log.info("unani_expert_done", confidence=expert_resp.confidence)

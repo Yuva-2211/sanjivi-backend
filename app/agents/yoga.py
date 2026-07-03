@@ -99,6 +99,8 @@ async def run_yoga_expert(
             max_tokens=settings.yoga_max_tokens,
             lane="expert",
         )
+        if response is None:
+            return None, chunks
         parsed = _parse_yoga_response(response.content)
         yoga_resp = _build_yoga_response(parsed)
         log.info("yoga_expert_done", poses=len(yoga_resp.poses))
