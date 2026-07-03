@@ -68,14 +68,17 @@ class Settings(BaseSettings):
     consensus_model: str = Field(default="openai/gpt-oss-120b")
     reviewer_model: str = Field(default="llama-3.1-8b-instant")
 
-    emergency_max_tokens: int = Field(default=200)
-    ayurveda_max_tokens: int = Field(default=600)
-    siddha_max_tokens: int = Field(default=600)
-    unani_max_tokens: int = Field(default=600)
-    homeopathy_max_tokens: int = Field(default=600)
-    yoga_max_tokens: int = Field(default=600)
-    consensus_max_tokens: int = Field(default=800)
-    reviewer_max_tokens: int = Field(default=300)
+    emergency_max_tokens = 150
+
+    ayurveda_max_tokens = 450
+    siddha_max_tokens = 450
+    unani_max_tokens = 450
+    homeopathy_max_tokens = 450
+    yoga_max_tokens = 450
+    
+    consensus_max_tokens = 400
+    
+    reviewer_max_tokens = 300
 
 
     # ── Concurrency & Rate Control ─────────────────────────────────────────────
