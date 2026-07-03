@@ -68,14 +68,15 @@ class Settings(BaseSettings):
     consensus_model: str = Field(default="openai/gpt-oss-120b")
     reviewer_model: str = Field(default="llama-3.1-8b-instant")
 
-    emergency_max_tokens: int = Field(default=500)
-    ayurveda_max_tokens: int = Field(default=900)
-    siddha_max_tokens: int = Field(default=900)
-    unani_max_tokens: int = Field(default=900)
-    homeopathy_max_tokens: int = Field(default=900)
-    yoga_max_tokens: int = Field(default=900)
-    consensus_max_tokens: int = Field(default=1000)
-    reviewer_max_tokens: int = Field(default=700)
+    emergency_max_tokens: int = Field(default=200)
+    ayurveda_max_tokens: int = Field(default=600)
+    siddha_max_tokens: int = Field(default=600)
+    unani_max_tokens: int = Field(default=600)
+    homeopathy_max_tokens: int = Field(default=600)
+    yoga_max_tokens: int = Field(default=600)
+    consensus_max_tokens: int = Field(default=800)
+    reviewer_max_tokens: int = Field(default=300)
+
 
     # ── Concurrency & Rate Control ─────────────────────────────────────────────
     # How many expert LLM calls can run concurrently (2 = balanced, 5 = burst)
