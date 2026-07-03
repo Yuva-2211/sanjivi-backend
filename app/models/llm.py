@@ -190,6 +190,16 @@ def get_openrouter_llm_json(model: str, max_tokens: int | None = None) -> ChatOp
     return _build_chatopenrouter(model, max_tokens, {"type": "json_object"})
 
 
+def get_llm(model: str | None = None, max_tokens: int | None = None) -> ChatGroq:
+    """Return a cached ChatGroq instance without JSON mode (backward compatibility)."""
+    return get_groq_llm(model, max_tokens)
+
+
+def get_llm_json(model: str | None = None, max_tokens: int | None = None) -> ChatGroq:
+    """Return a cached ChatGroq instance with JSON mode (backward compatibility)."""
+    return get_groq_llm_json(model, max_tokens)
+
+
 # ── Invocation and Retry Policy ───────────────────────────────────────────────
 
 async def _invoke_with_retry(llm: Any, msgs: list[BaseMessage], model_name: str) -> Any:

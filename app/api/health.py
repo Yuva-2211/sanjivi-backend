@@ -15,7 +15,7 @@ from typing import Any
 from fastapi import APIRouter, HTTPException, status
 
 from app.config import settings
-from app.models.llm import get_llm
+from app.models.llm import get_llm, get_openrouter_llm
 from app.rag import bm25_store
 from app.rag.bm25_store import _corpus_path, build_and_save
 from app.rag.pinecone_client import get_index, list_namespace_stats
@@ -30,7 +30,7 @@ router = APIRouter()
     "/health",
     status_code=status.HTTP_200_OK,
     summary="Check backend health",
-    description="Verifies connectivity to Groq LLM API and Pinecone vector database.",
+    description="Verifies connectivity to Groq, OpenRouter, and Pinecone vector database.",
 )
 async def health_endpoint() -> dict[str, Any]:
     """
@@ -40,6 +40,7 @@ async def health_endpoint() -> dict[str, Any]:
         "status": "healthy",
         "services": {
             "groq": "unknown",
+            "openrouter": "unknown",
             "pinecone": "unknown",
         },
     }
@@ -54,7 +55,17 @@ async def health_endpoint() -> dict[str, Any]:
         health_status["services"]["groq"] = f"failed: {exc}"
         health_status["status"] = "unhealthy"
 
-    # 2. Test Pinecone
+    # 2. Test OpenRouter
+    try:
+        llm = get_openrouter_llm(settings.ayurveda_model)
+        await llm.ainvoke("ping")
+        health_status["services"]["openrouter"] = "connected"
+    except Exception as exc:
+        log.error("health_check_openrouter_failed", error=str(exc))
+        health_status["services"]["openrouter"] = f"failed: {exc}"
+        health_status["status"] = "unhealthy"
+
+    # 3. Test Pinecone
     try:
         stats = list_namespace_stats()
         health_status["services"]["pinecone"] = {
