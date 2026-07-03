@@ -52,7 +52,9 @@ class Settings(BaseSettings):
     top_k_rerank: int = Field(default=3)
     top_k_final: int = Field(default=3)
     rrf_k: int = Field(default=60)
-    context_max_chars: int = Field(default=3200)
+    context_max_chars: int = Field(default=2000)
+
+ 
 
     # ── Per-agent LLM routing ───────────────────────────────────────────────────
     # emergency + reviewer stay on fast 8b model for low latency
