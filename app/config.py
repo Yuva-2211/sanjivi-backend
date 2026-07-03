@@ -23,6 +23,7 @@ class Settings(BaseSettings):
 
     # ── LLM ──────────────────────────────────────────────────────────────────
     groq_api_key: str = Field(default="", description="Groq API key")
+    groq_api_keys_str: str = Field(default="", description="Comma-separated Groq API keys for rotation")
     openrouter_api_key: str = Field(default="", description="OpenRouter API key")
     groq_model: str = Field(
         default="llama-3.3-70b-versatile",
