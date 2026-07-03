@@ -94,6 +94,7 @@ async def run_ayurveda_expert(
             messages,
             model=settings.ayurveda_model,
             max_tokens=settings.ayurveda_max_tokens,
+            lane="expert",
         )
         parsed = _parse_expert_response(response.content)
         expert_resp = _build_expert_response(parsed, response.content)

@@ -85,6 +85,7 @@ async def run_yoga_expert(
             messages,
             model=settings.yoga_model,
             max_tokens=settings.yoga_max_tokens,
+            lane="expert",
         )
         parsed = _parse_yoga_response(response.content)
         yoga_resp = _build_yoga_response(parsed)

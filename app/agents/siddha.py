@@ -84,6 +84,7 @@ async def run_siddha_expert(
             messages,
             model=settings.siddha_model,
             max_tokens=settings.siddha_max_tokens,
+            lane="expert",
         )
         parsed = _parse_expert_response(response.content)
         expert_resp = _build_expert_response(parsed, response.content)

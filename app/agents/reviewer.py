@@ -88,6 +88,7 @@ async def run_reviewer_agent(
             messages,
             model=settings.reviewer_model,
             max_tokens=settings.reviewer_max_tokens,
+            lane="reviewer",
         )
         parsed = parse_json_response(response.content)
 

@@ -84,6 +84,7 @@ async def run_homeopathy_expert(
             messages,
             model=settings.homeopathy_model,
             max_tokens=settings.homeopathy_max_tokens,
+            lane="expert",
         )
         parsed = _parse_expert_response(response.content)
         expert_resp = _build_expert_response(parsed, response.content)

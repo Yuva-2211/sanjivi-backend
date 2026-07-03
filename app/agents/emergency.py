@@ -124,6 +124,7 @@ async def screen_for_emergency(
             model=settings.emergency_model,
             max_tokens=settings.emergency_max_tokens,
             force_json=True,
+            lane="emergency",
         )
         raw = response.content
         parsed = parse_json_response(raw)

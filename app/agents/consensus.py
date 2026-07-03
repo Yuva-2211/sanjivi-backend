@@ -84,6 +84,7 @@ async def run_consensus_agent(
             messages,
             model=settings.consensus_model,
             max_tokens=settings.consensus_max_tokens,
+            lane="consensus",
         )
         parsed = parse_json_response(response.content)
 

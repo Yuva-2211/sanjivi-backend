@@ -74,6 +74,16 @@ class Settings(BaseSettings):
     consensus_max_tokens: int = Field(default=1000)
     reviewer_max_tokens: int = Field(default=700)
 
+    # ── Concurrency & Rate Control ─────────────────────────────────────────────
+    # How many expert LLM calls can run concurrently (2 = balanced, 5 = burst)
+    max_concurrent_experts: int = Field(default=2, description="Max concurrent expert agent calls")
+    # Hard cap on total simultaneous Groq calls (guards against burst across all lanes)
+    max_concurrent_global: int = Field(default=3, description="Global max concurrent Groq API calls")
+    # Backoff base (seconds) for 429 retries: base^attempt → 2, 4, 8
+    groq_backoff_base: int = Field(default=2, description="Exponential backoff base for 429 retries")
+    # Per-expert timeout
+    expert_timeout: int = Field(default=28, description="Expert agent LLM call timeout (seconds)")
+
     # ── Paths ─────────────────────────────────────────────────────────────────
     data_dir: str = Field(default="../data")
     bm25_index_dir: str = Field(default="bm25_indexes")
