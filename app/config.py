@@ -61,12 +61,12 @@ class Settings(BaseSettings):
     # emergency + reviewer stay on fast 8b model for low latency (Groq)
     # Clinical agents + consensus use meta-llama/llama-3.3-70b-instruct via OpenRouter for reasoning
     emergency_model: str = Field(default="llama-3.1-8b-instant")
-    ayurveda_model: str = Field(default="meta-llama/llama-3.3-70b-instruct")
-    siddha_model: str = Field(default="meta-llama/llama-3.3-70b-instruct")
-    unani_model: str = Field(default="meta-llama/llama-3.3-70b-instruct")
-    homeopathy_model: str = Field(default="meta-llama/llama-3.3-70b-instruct")
-    yoga_model: str = Field(default="meta-llama/llama-3.3-70b-instruct")
-    consensus_model: str = Field(default="meta-llama/llama-3.3-70b-instruct")
+    ayurveda_model: str = Field(default="openai/gpt-oss-120b")
+    siddha_model: str = Field(default="openai/gpt-oss-120b")
+    unani_model: str = Field(default="openai/gpt-oss-120b")
+    homeopathy_model: str = Field(default="openai/gpt-oss-120b")
+    yoga_model: str = Field(default="openai/gpt-oss-120b")
+    consensus_model: str = Field(default="openai/gpt-oss-120b")
     reviewer_model: str = Field(default="llama-3.1-8b-instant")
 
     
