@@ -95,20 +95,11 @@ class RateLimitError(Exception):
 
 def _get_provider_for_model(model_name: str) -> Literal["groq", "openrouter"]:
     """
-    Determine the LLM provider based on the model name.
-    Reasoning-heavy models map to OpenRouter; latency-critical map to Groq.
+    Determine the LLM provider based on the model name's shape.
+    OpenRouter slugs are always "namespace/model" (contain a slash).
+    Groq model names never contain a slash.
     """
-    openrouter_models = {
-        settings.ayurveda_model,
-        settings.siddha_model,
-        settings.unani_model,
-        settings.homeopathy_model,
-        settings.yoga_model,
-        settings.consensus_model,
-    }
-    if model_name in openrouter_models or "/" in model_name:
-        return "openrouter"
-    return "groq"
+    return "openrouter" if "/" in model_name else "groq"
 
 
 # ── LLM builders ─────────────────────────────────────────────────────────────
@@ -227,10 +218,7 @@ async def _invoke_with_retry(llm: Any, msgs: list[BaseMessage], model_name: str)
     Raises the original exception for all other errors.
     """
     provider = _get_provider_for_model(model_name)
-    if provider == "openrouter":
-        max_attempts = 1
-    else:
-        max_attempts = settings.groq_max_retries + 1
+    max_attempts = settings.groq_max_retries + 1  # same retry budget for both providers
 
     base = settings.groq_backoff_base
     last_exc: Exception | None = None

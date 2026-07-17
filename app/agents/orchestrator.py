@@ -42,6 +42,7 @@ from app.agents.siddha import run_siddha_expert
 from app.agents.unani import run_unani_expert
 from app.agents.yoga import run_yoga_expert
 from app.agents.yoga_image_search import search_yoga_images
+from app.config import settings
 from app.rag.retriever import get_hybrid_retriever
 from app.utils.routing import classify_query_domains, VALID_SYSTEMS, normalize_selected_system
 from app.schemas.chat import (
@@ -202,36 +203,47 @@ async def run_experts_node(state: SanjiviState) -> dict:
             else:
                 chunk_map[label] = result
 
-    # ── Expert generation sequentially ─────────────────────────────────────────
-    # Run selected expert domains sequentially (not parallel) to avoid OpenRouter 429 rate limits.
-    # If an expert fails or times out, proceed to the next immediately.
+    # ── Expert generation concurrently ───────────────────────────────────────────
+    # Run selected expert domains concurrently via asyncio.gather.
+    # Rate-limit protection is handled by the semaphores inside call_llm() —
+    # max_concurrent_experts (default 2) gates how many actually hit the LLM at once.
     expert_results: dict[str, Any] = {}
     all_chunks: list[RetrievedChunk] = []
     expert_failure_reasons: dict[str, str] = {}  # for diagnostics
 
-    for label, (expert_fn, _) in selected_experts.items():
-        log.info("running_expert_sequentially", domain=label)
-        chunks = chunk_map.get(label, [])
+    async def _run_one_expert(
+        label: str,
+        expert_fn: Any,
+        chunks: list[RetrievedChunk],
+    ) -> tuple[str, Any, str | None]:
+        log.info("running_expert", domain=label)
         try:
-            # Each expert has a 15-second timeout
             res = await asyncio.wait_for(
                 expert_fn(query, chunks=chunks, history=history),
-                timeout=15.0
+                timeout=settings.expert_timeout,
             )
-            if res is None:
-                expert_results[label] = None
-            else:
-                resp_obj, used_chunks = res
-                expert_results[label] = (resp_obj, used_chunks)
-                all_chunks.extend(used_chunks)
+            return label, res, None
         except asyncio.TimeoutError:
             log.error("expert_timeout", domain=label)
-            expert_failure_reasons[label] = "timeout"
-            expert_results[label] = None
+            return label, None, "timeout"
         except Exception as exc:
             log.error("expert_error", domain=label, error=str(exc))
-            expert_failure_reasons[label] = type(exc).__name__
+            return label, None, type(exc).__name__
+
+    gather_results = await asyncio.gather(*(
+        _run_one_expert(label, expert_fn, chunk_map.get(label, []))
+        for label, (expert_fn, _) in selected_experts.items()
+    ))
+
+    for label, res, reason in gather_results:
+        if reason:
+            expert_failure_reasons[label] = reason
+        if res is None:
             expert_results[label] = None
+        else:
+            resp_obj, used_chunks = res
+            expert_results[label] = (resp_obj, used_chunks)
+            all_chunks.extend(used_chunks)
 
     def _safe_response(
         res: Any,
