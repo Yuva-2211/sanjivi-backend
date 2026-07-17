@@ -71,7 +71,13 @@ async def run_siddha_expert(
 
     if not context.strip():
         log.warning("siddha_no_context", query=query[:80])
-        context = "No specific documents were retrieved. Use your comprehensive Siddha medical knowledge."
+        return (
+            ExpertResponse(
+                diagnosis="Insufficient Siddha literature was retrieved to address this query.",
+                confidence=0.0,
+            ),
+            [],
+        )
 
     messages = [
         SystemMessage(content=SIDDHA_SYSTEM),

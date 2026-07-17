@@ -81,7 +81,13 @@ async def run_ayurveda_expert(
 
     if not context.strip():
         log.warning("ayurveda_no_context", query=query[:80])
-        context = "No specific documents were retrieved. Use your comprehensive Ayurvedic knowledge."
+        return (
+            ExpertResponse(
+                diagnosis="Insufficient Ayurvedic literature was retrieved to address this query. Please ensure documents have been ingested.",
+                confidence=0.0,
+            ),
+            [],
+        )
 
     messages = [
         SystemMessage(content=AYURVEDA_SYSTEM),

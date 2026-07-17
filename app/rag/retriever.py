@@ -168,7 +168,6 @@ def build_context_string(chunks: Sequence[RetrievedChunk], max_chars: int | None
 
     Each chunk is prefixed with its source so the model can cite it.
     Total context is capped at *max_chars* to stay within token limits.
-    Always includes at least one chunk if any exist.
     """
     max_chars = max_chars or settings.context_max_chars
     parts: list[str] = []
@@ -176,8 +175,7 @@ def build_context_string(chunks: Sequence[RetrievedChunk], max_chars: int | None
     for chunk in chunks:
         header = f"[Source: {chunk.source_file}, page {chunk.page}]"
         entry = f"{header}\n{chunk.text}\n"
-        if total + len(entry) > max_chars and parts:
-            # Already have at least one chunk — stop here
+        if total + len(entry) > max_chars:
             break
         parts.append(entry)
         total += len(entry)
