@@ -87,7 +87,7 @@ class Settings(BaseSettings):
     # Backoff base (seconds) for 429 retries: base^attempt → 2, 4, 8
     groq_backoff_base: int = Field(default=2, description="Exponential backoff base for 429 retries")
     # Per-expert timeout
-    expert_timeout: int = Field(default=55, description="Expert agent LLM call timeout (seconds)")
+    expert_timeout: int = Field(default=28, description="Expert agent LLM call timeout (seconds)")
 
     # ── Paths ─────────────────────────────────────────────────────────────────
     data_dir: str = Field(default="../data")

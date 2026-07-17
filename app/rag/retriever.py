@@ -174,9 +174,24 @@ def build_context_string(chunks: Sequence[RetrievedChunk], max_chars: int | None
     total = 0
     for chunk in chunks:
         header = f"[Source: {chunk.source_file}, page {chunk.page}]"
-        entry = f"{header}\n{chunk.text}\n"
-        if total + len(entry) > max_chars:
+        space_left = max_chars - total
+        separator_len = 5 if parts else 0
+        min_required = len(header) + 10 + separator_len  # header plus some minimal text
+
+        if space_left < min_required:
             break
+
+        text = chunk.text
+        entry_len_without_text = len(header) + 2 + separator_len
+        if len(text) > space_left - entry_len_without_text:
+            allowed_len = space_left - entry_len_without_text - 15  # leave room for " ... [truncated]"
+            if allowed_len > 0:
+                text = text[:allowed_len] + " ... [truncated]"
+            else:
+                break
+
+        entry = f"{header}\n{text}\n"
         parts.append(entry)
-        total += len(entry)
+        total += len(entry) + separator_len
+
     return "\n---\n".join(parts)
