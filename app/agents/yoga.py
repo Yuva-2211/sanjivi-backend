@@ -70,22 +70,13 @@ async def run_yoga_expert(
         )
 
     if not context.strip():
-        # Diagnostic: distinguish "retriever returned 0 chunks" from "chunks have empty text metadata"
-        sample_texts = [c.text[:60] if hasattr(c, "text") else "?" for c in (chunks or [])]
         log.warning(
             "yoga_no_context",
             query=query[:80],
             chunks_received=len(chunks or []),
-            sample_texts=sample_texts[:3],
+            sample_texts=[c.text[:60] if hasattr(c, "text") else "?" for c in (chunks or [])][:3],
         )
-        return (
-            YogaResponse(
-                poses=[],
-                breathing_exercises=[],
-                lifestyle="Insufficient Yoga literature was retrieved to address this query.",
-            ),
-            [],
-        )
+        context = "No specific documents were retrieved. Use your comprehensive Yoga and Naturopathy knowledge."
 
     messages = [
         SystemMessage(content=YOGA_SYSTEM),

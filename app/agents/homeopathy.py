@@ -71,13 +71,7 @@ async def run_homeopathy_expert(
 
     if not context.strip():
         log.warning("homeopathy_no_context", query=query[:80])
-        return (
-            ExpertResponse(
-                diagnosis="Insufficient Homeopathy literature was retrieved to address this query.",
-                confidence=0.0,
-            ),
-            [],
-        )
+        context = "No specific documents were retrieved. Use your comprehensive Homeopathic knowledge."
 
     messages = [
         SystemMessage(content=HOMEOPATHY_SYSTEM),
