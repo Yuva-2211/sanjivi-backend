@@ -48,12 +48,12 @@ class Settings(BaseSettings):
     # ── RAG Tuning ────────────────────────────────────────────────────────────
     chunk_size: int = Field(default=512)
     chunk_overlap: int = Field(default=64)
-    top_k_dense: int = Field(default=6)
-    top_k_bm25: int = Field(default=5)
-    top_k_rerank: int = Field(default=3)
-    top_k_final: int = Field(default=3)
+    top_k_dense: int = Field(default=8)
+    top_k_bm25: int = Field(default=7)
+    top_k_rerank: int = Field(default=6)
+    top_k_final: int = Field(default=5)
     rrf_k: int = Field(default=60)
-    context_max_chars: int = Field(default=2000)
+    context_max_chars: int = Field(default=4000)
 
  
 
@@ -71,13 +71,13 @@ class Settings(BaseSettings):
 
     
     emergency_max_tokens: int = Field(default=150)
-    ayurveda_max_tokens: int = Field(default=500)
-    siddha_max_tokens: int = Field(default=500)
-    unani_max_tokens: int = Field(default=500)
-    homeopathy_max_tokens: int = Field(default=500)
-    yoga_max_tokens: int = Field(default=500)
-    consensus_max_tokens: int = Field(default=600)
-    reviewer_max_tokens: int = Field(default=300)
+    ayurveda_max_tokens: int = Field(default=700)
+    siddha_max_tokens: int = Field(default=700)
+    unani_max_tokens: int = Field(default=700)
+    homeopathy_max_tokens: int = Field(default=700)
+    yoga_max_tokens: int = Field(default=700)
+    consensus_max_tokens: int = Field(default=800)
+    reviewer_max_tokens: int = Field(default=400)
 
     # ── Concurrency & Rate Control ─────────────────────────────────────────────
     # How many expert LLM calls can run concurrently (2 = balanced, 5 = burst)

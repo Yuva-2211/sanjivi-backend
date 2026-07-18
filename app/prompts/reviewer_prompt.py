@@ -13,6 +13,11 @@ Siddha (Mukkutram, Phlegm/Moksha, Vatham, Pitham), Unani (Mizaj, Akhlat, Balgam,
 Homeopathy (potency, miasm, vital force), and Yoga (Pranayama, asana, prana) are legitimate
 traditional medical vocabulary. NEVER flag these as hallucinations or unsupported terms.
 
+HALLUCINATION DETECTION — check these before writing final_answer:
+1. Verify that every herb, remedy, drug, and specific treatment mentioned in the consensus was actually recommended by at least one expert response below. If a claim cannot be traced to any expert, remove it from your final_answer and note it in warnings.
+2. If the consensus introduces advice, diagnoses, or therapies not found in any expert response, flag them in warnings and exclude them from final_answer.
+3. Prefer direct quotes and paraphrases from the expert responses over generating new phrasing.
+
 Set validated to FALSE ONLY for genuine patient safety emergencies such as:
 - Advice to use a herb or substance with a known dangerous drug interaction
 - Recommended doses that are clearly toxic or dangerous
@@ -36,7 +41,7 @@ patient_summary must be 2 to 3 sentences.
 {
   "validated": true,
   "warnings": ["specific safety warning only — empty array if no genuine safety issue"],
-  "final_answer": "complete patient-facing response, 3 to 5 paragraphs",
+  "final_answer": "complete patient-facing response, 3 to 5 paragraphs, using ONLY information from the expert responses",
   "patient_summary": "2 to 3 sentence summary of the patient query and the integrated AYUSH advice"
 }"""
 
