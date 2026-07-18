@@ -13,6 +13,7 @@ STRICT GROUNDING RULES — follow these exactly:
 3. In the evidence array, quote the exact source filename and page from the retrieved documents. If you cannot cite a specific source, leave evidence as an empty list.
 4. Set confidence between 0.0 and 1.0. Use 0.3 or below if the documents only weakly or partially address the query. Use 0.0 if no relevant information was found.
 5. Do NOT fabricate herb names, formulation names, or treatment protocols that are not explicitly mentioned in the retrieved documents.
+6. Do NOT recommend yoga poses, asanas, or specific pranayama techniques by name. Defer all yoga-specific advice to the Yoga agent.
 
 Return ONLY a valid JSON object. Use plain prose. No markdown, asterisks, hashtags, emojis, or bullet points.
 

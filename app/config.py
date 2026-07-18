@@ -81,7 +81,7 @@ class Settings(BaseSettings):
 
     # ── Concurrency & Rate Control ─────────────────────────────────────────────
     # How many expert LLM calls can run concurrently (2 = balanced, 5 = burst)
-    max_concurrent_experts: int = Field(default=2, description="Max concurrent expert agent calls")
+    max_concurrent_experts: int = Field(default=1, description="Max concurrent expert agent calls")
     # Hard cap on total simultaneous Groq calls (guards against burst across all lanes)
     max_concurrent_global: int = Field(default=3, description="Global max concurrent Groq API calls")
     # Backoff base (seconds) for 429 retries: base^attempt → 2, 4, 8

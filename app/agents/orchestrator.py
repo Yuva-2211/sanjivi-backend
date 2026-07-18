@@ -42,6 +42,8 @@ from app.agents.siddha import run_siddha_expert
 from app.agents.unani import run_unani_expert
 from app.agents.yoga import run_yoga_expert
 from app.agents.yoga_image_search import search_yoga_images
+# pyrefly: ignore [missing-import]
+from app.agents.contextualizer import contextualize_query
 from app.config import settings
 from app.rag.retriever import get_hybrid_retriever
 from app.utils.routing import classify_query_domains, VALID_SYSTEMS, normalize_selected_system
@@ -142,9 +144,13 @@ async def run_experts_node(state: SanjiviState) -> dict:
     """Run the routed AYUSH expert domains sequentially to minimize OpenRouter 429s."""
     log.info("node_run_experts", query=state["query"][:80], selected_system=state["selected_system"])
 
-    query = state["query"].strip()
-    selected_system = normalize_selected_system(state.get("selected_system", "Multisystem"))
+    raw_query = state["query"].strip()
     history = state.get("history", [])
+    
+    # Rewrite short/ambiguous follow-ups into standalone queries
+    query = await contextualize_query(raw_query, history)
+
+    selected_system = normalize_selected_system(state.get("selected_system", "Multisystem"))
 
     expert_map = {
         "Ayurveda": (run_ayurveda_expert, "ayurveda"),
@@ -217,18 +223,22 @@ async def run_experts_node(state: SanjiviState) -> dict:
         chunks: list[RetrievedChunk],
     ) -> tuple[str, Any, str | None]:
         log.info("running_expert", domain=label)
-        try:
-            res = await asyncio.wait_for(
-                expert_fn(query, chunks=chunks, history=history),
-                timeout=settings.expert_timeout,
-            )
-            return label, res, None
-        except asyncio.TimeoutError:
-            log.error("expert_timeout", domain=label)
-            return label, None, "timeout"
-        except Exception as exc:
-            log.error("expert_error", domain=label, error=str(exc))
-            return label, None, type(exc).__name__
+        for attempt in range(2):  # one retry on timeout
+            try:
+                res = await asyncio.wait_for(
+                    expert_fn(query, chunks=chunks, history=history),
+                    timeout=settings.expert_timeout,
+                )
+                return label, res, None
+            except asyncio.TimeoutError:
+                if attempt == 0:
+                    log.warning("expert_timeout_retrying", domain=label)
+                    continue
+                log.error("expert_timeout", domain=label)
+                return label, None, "timeout"
+            except Exception as exc:
+                log.error("expert_error", domain=label, error=str(exc))
+                return label, None, type(exc).__name__
 
     gather_results = await asyncio.gather(*(
         _run_one_expert(label, expert_fn, chunk_map.get(label, []))
